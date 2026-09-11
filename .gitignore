@@ -1,0 +1,15 @@
+Algora/
+build/
+deps/
+.reference-deps/
+.vscode
+experiments/data
+experiments/*/results*/*
+experiments/*/plots*/*
+compilcompile_commands
+*.pdf
+experiments/*/ref*/*
+*.aux
+*.log
+*.fls
+**__pycache__**

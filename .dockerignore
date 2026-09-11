@@ -1,0 +1,15 @@
+.git
+build
+deps
+.reference-deps
+Engineering_Fully_Dynamic_Subgraph_Counting.pdf
+exp/data
+exp/results
+exp/plots
+exp/resources
+**/__pycache__
+**/*.pyc
+# The reproduction harness is self-contained; never rely on legacy scripts or
+# data recipes being present in the Docker build context.
+experiments/**
+get_data/**

@@ -1,0 +1,392 @@
+# https://siegal.bio.nyu.edu/color-palette/
+# https://cran.r-project.org/web/packages/khroma/vignettes/tol.html
+
+algo_config:
+  egst:
+    display_name: "EGST*"
+    color: "#56B4E9"
+    pattern: '.'
+    marker: "o"
+    linestyle: "" #solid
+  egst_direct:
+    display_name: "EGST*-D"
+    color: "#E69F00"
+    pattern: 'x'
+    marker: "o"
+    linestyle: "" #solid
+  egst_high_direct:
+    display_name: "EGST*-HD"
+    color: "#009E73"
+    pattern: 'O.'
+    marker: "o"
+    linestyle: "" #solid
+  egst_highS3:
+    display_name: "EGST*-H"
+    color: "#F0E442"
+    pattern: '/'
+    marker: "o"
+    linestyle: "" #solid
+  egst_direct_highS3:
+    display_name: "EGST*-HD"
+    color: "#009E73"
+    marker: "s"
+    pattern: 'O.'
+    linestyle: "" #solid
+  hhh:
+    display_name: "HHH*-HA"
+    color: "#CC79A7"
+    pattern: '..'
+    marker: "s"
+    linestyle: "" #solid
+  hhhl:
+    display_name: "HHH*-H (LATE)"
+    color: "#D55E00"
+    pattern: '..'
+    marker: "s"
+    linestyle: "" #solid
+  v_hhh:
+    display_name: "HHH*"
+    color: "#E69F00"
+    pattern: '..'
+    marker: "s"
+    linestyle: "" #solid
+  dna:
+    display_name: "DNA"
+    color: "gray"
+    pattern: '..'
+    marker: "s"
+    linestyle: "" #solid
+  oba:
+    display_name: "OB"
+    color: "gray"
+    pattern: '..'
+    # color: "#CC3311"
+    marker: "x"
+  escape:
+    display_name: "ESCAPE"
+    pattern: '..'
+    # color: "gray"
+    color: "#CC3311"
+    marker: "x"
+  symbi:
+    display_name: "Symbi"
+    pattern: '..'
+    color: "#F0E442"
+    pattern: ''
+  graphflow:
+    display_name: "Graphflow"
+    pattern: '..'
+    color: "#56B4E9"
+    pattern: ''
+  rapidflow:
+    display_name: "RapidFlow"
+    pattern: '..'
+    color: "#D55E00"
+    pattern: ''
+  turboflux:
+    display_name: "Turboflux"
+    pattern: '..'
+    color: "#0072B2"
+    pattern: ''
+  iedyn:
+    display_name: "Iedyn"
+    pattern: '..'
+    color: "#E69F00"
+    pattern: ''
+
+
+
+partition_config:
+  epstab:
+    # display_name: "orig $\\varepsilon$-Partition"
+    # display_name: "$\\varepsilon$-Partition"
+    display_name: "orig"
+    color: "#DDCC77"
+    marker: 'o'
+    pattern: '..'
+    linestyle: "" #solid
+  epstab_036:
+    # display_name: "$\\varepsilon(.36)$-P."
+    display_name: "orig.36"
+    color: "#DDCC77"
+    marker: 'o'
+    pattern: '..'
+    linestyle: "" #solid
+  epstab_0417:
+    display_name: "orig.417"
+    # display_name: "$\\varepsilon(.417)$-P."
+    color: "#DDCC77"
+    marker: 'o'
+    pattern: '..'
+    linestyle: "" #solid
+
+  epstab_soft:
+    display_name: "soft"
+    # display_name: "soft $\\varepsilon$-Partition"
+    # display_name: "$\\varepsilon$-Soft-Partition"
+    color: "#117733"
+    marker: 'd'
+    pattern: 'OO'
+    linestyle: [5, 2]  # dashed
+
+  epstab_late:
+    display_name: "late"
+    # display_name: "late $\\varepsilon$-Partition"
+    color: "#332288"
+    marker: 's'
+    pattern: '--'
+    linestyle: [5, 2]  # dashed
+
+  epstab_lazy:
+    display_name: "lazy"
+    # display_name: "lazy $\\varepsilon$-Partition"
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: '**'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_036:
+    display_name: "lazy.36"
+    # display_name: "$\\varepsilon(.36)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'o'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_0367:
+    display_name: "lazy.367"
+    # display_name: "$\\varepsilon(.367)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'o'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_0.36:
+    display_name: "lazy.36"
+    # display_name: "epstab_lazy_0.36"
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'o'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_02:
+    display_name: "lazy.2"
+    # display_name: "$\\varepsilon(.2)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'oo'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_0.2:
+    display_name: "lazy.2"
+    # display_name: "$\\varepsilon(.2)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'O.'
+    linestyle: [5, 2]  # dashed
+  epstab_late_0.2:
+    display_name: "late.2"
+    # display_name: "$\\varepsilon(.2)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'oo'
+    linestyle: [5, 2]  # dashed
+  epstab_late_02:
+    display_name: "late.2"
+    # display_name: "$\\varepsilon(.2)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'oo'
+    linestyle: [5, 2]  # dashed
+  epstab_0.417:
+    display_name: "orig.417"
+    # display_name: "$\\varepsilon(.417)$-P."
+    color: "#DDCC77"
+    marker: 'o'
+    pattern: '.'
+    linestyle: "" #solid
+  epstab_lazy_04:
+    display_name: "lazy.4"
+    display_name: "$\\varepsilon(.4)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'O.O.'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_0.4:
+    display_name: "lazy.4"
+    # display_name: "$\\varepsilon(.4)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: 'O.O.'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_0333:
+    display_name: "lazy.333"
+    # display_name: "$\\varepsilon(.333)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: '*'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_0.33:
+    display_name: "lazy.33"
+    # display_name: "$\\varepsilon(.33)$-Lazy-P."
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: '*'
+    linestyle: [5, 2]  # dashed
+
+  epstab_lazy_rr1e-05:
+    display_name: "$\\varepsilon$-Lazy-Partition(rrp=0.001\\%)"
+    color: "#44AA99"
+    marker: 'v'
+    pattern: '**'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_rr0.0001:
+    display_name: "$\\varepsilon$-Lazy-Partition(rrp=0.01\\%)"
+    color: "#332288"
+    marker: 'v'
+    pattern: '**'
+    linestyle: [5, 2]  # dashed
+
+  epstab_lazy_rr0.001:
+    display_name: "$\\varepsilon$-Lazy-Partition(rrp=0.1\\%)"
+    color: "#999933"
+    marker: 'v'
+    pattern: '**'
+    linestyle: [5, 2]  # dashed
+
+  epstab_lazy_rr0.01:
+    display_name: "$\\varepsilon$-Lazy-Partition(rrp=1\\%)"
+    color: "#AA4499"
+    marker: 'v'
+    pattern: '**'
+    linestyle: [5, 2]  # dashed
+  epstab_lazy_rr0.1:
+    display_name: "$\\varepsilon$-Lazy-Partition(rrp=10\\%)"
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: '**'
+    linestyle: [5, 2]  # dashed
+
+  epstab_early:
+    display_name: "epstab_early"
+    color: "#DDCC77"
+    marker: 'o'
+    pattern: '..'
+    linestyle: "" #solid
+
+  epstab_soft_early:
+    display_name: "epstab_soft_early"
+    color: "#117733"
+    marker: 'v'
+    pattern: 'OO'
+    linestyle: [5, 2]  # dashed
+
+  epstab_lazy_early:
+    display_name: "epstab_lazy_early"
+    color: "#88CCEE"
+    marker: 'v'
+    pattern: '**'
+    linestyle: [5, 2]  # dashed
+    
+  hindex2.0:
+    display_name: "h(2)"
+    # display_name: "$h$-Index (c=2)"
+    color: "#CC6677"
+    marker: 'P'
+    pattern: 'x'
+    # linestyle: 'dashdot'
+    linestyle: [3,1,1,1]
+
+
+  hindex1.0625:
+    display_name: "h($\\frac{17}{16}$)"
+    # display_name: "$h$-Index (c=$\\frac{17}{16}$)"
+    color: "#882255"
+    marker: 'P'
+    pattern: '/'
+    linestyle: [1, 0.25]
+
+  none:
+    display_name: "none"
+    color: "#44AA99"
+    marker: 'P'
+    pattern: ''
+    linestyle: [3,2,1,2] #dashdotted
+
+
+metric_config:
+  time:
+    display_name: "Time"
+    color: "#DF4828"
+    marker: 'o'
+    linestyle: "" #solid
+
+  struct_time:
+    display_name: "Structure Time"
+    color: "#6F4C9B"
+    marker: 'v'
+    linestyle: "" #solid
+
+  operations:
+    display_name: "Structure Updates"
+    color: "#6F4C9B"
+    marker: '<'
+    linestyle: [2, 2]  # dotted
+
+  subgraph_time:
+    display_name: "Subgraph Time"
+    color: "#77B77D"
+    marker: 'p'
+    linestyle: "" #solid
+
+  iterates:
+    display_name: "Sum Traversals"
+    color: "#77B77D"
+    marker: 'P'
+    linestyle: [2, 2]  # dotted
+
+
+  partition_time:
+    display_name: "Partition Time"
+    color: "#E49C39"
+    marker: 'd'
+    linestyle: "" #solid
+
+  num_part_changes:
+    display_name: "Partition Changes"
+    color: "#E49C39"
+    marker: 'D'
+    linestyle: [2, 2]  # dotted
+
+pattern_config:
+# Paul Tol’s: light
+  all:
+    display_name: "all"
+    color: "#77AADD"
+    marker: '8'
+    linestyle: "" #solid
+  fCycles:
+    display_name: "4-cycles"
+    color: "#EE8866"
+    marker: '>'
+    linestyle: "" #solid
+  diamonds:
+    display_name: "diamonds"
+    color: "#EEDD88"
+    marker: '^'
+    linestyle: "" #solid
+  paws:
+    display_name: "paws"
+    color: "#44BB99"
+    marker: 's'
+    linestyle: "" #solid
+  tPaths:
+    display_name: "3-paths"
+    color: "#AAAA00"
+    marker: 'h'
+    linestyle: "" #solid
+  tCycles:
+    display_name: "triangles"
+    color: "#FFAABB"
+    marker: '+'
+    linestyle: "" #solid
+  fCliques:
+    display_name: "4-cliques"
+    color: "#BBCC33"
+    marker: 'x'
+    linestyle: "" #solid
