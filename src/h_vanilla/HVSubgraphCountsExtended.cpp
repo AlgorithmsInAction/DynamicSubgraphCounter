@@ -424,7 +424,7 @@ COUNTER_TYPE HVSubgraphCounts::getNrFCliquesWithEdge(ILV *head, ILV *tail) {
 
     if (d1 * d1 > m && d2 * d2 > m) {
         // Need to run over all edges for O(m) runtime
-        graph->mapArcs([&](auto edge) {
+        graph->mapEdges([&](auto edge) {
             auto x = edge->getHead();
             auto y = edge->getTail();
             if (x == head || x == tail || y == head || y == tail) {
