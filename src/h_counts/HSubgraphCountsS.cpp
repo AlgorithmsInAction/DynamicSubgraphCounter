@@ -46,19 +46,19 @@ COUNTER_TYPE HSubgraphCounts::sTPathCount(ILV *head, ILV *tail, ILV *s, bool,
 
         if (Esh && !Est) {
 
-            increment += graph->getUndirectedDegree(s) - 1 +
-                         graph->getUndirectedDegree(tail) - 1;
+            increment += s->getUndirectedDegree() - 1 +
+                         tail->getUndirectedDegree() - 1;
         }
         if (!Esh && Est) {
 
-            increment += graph->getUndirectedDegree(s) - 1 +
-                         graph->getUndirectedDegree(head) - 1;
+            increment += s->getUndirectedDegree() - 1 +
+                         head->getUndirectedDegree() - 1;
         }
         if (Esh && Est) {
 
-            increment += 2 * (graph->getUndirectedDegree(s) - 2) +
-                         graph->getUndirectedDegree(tail) - 2 +
-                         graph->getUndirectedDegree(head) - 2;
+            increment += 2 * (s->getUndirectedDegree() - 2) +
+                         tail->getUndirectedDegree() - 2 +
+                         head->getUndirectedDegree() - 2;
         }
     }
 
@@ -145,9 +145,9 @@ COUNTER_TYPE HSubgraphCounts::sPawCount(ILV *head, ILV *tail, ILV *s, bool,
                 increment -= 2;
         }
         if (Esh && Est) {
-            increment += graph->getUndirectedDegree(head) - 2 +
-                         graph->getUndirectedDegree(tail) - 2 +
-                         graph->getUndirectedDegree(s) - 2;
+            increment += head->getUndirectedDegree() - 2 +
+                         tail->getUndirectedDegree() - 2 +
+                         s->getUndirectedDegree() - 2;
         }
     }
     return increment;

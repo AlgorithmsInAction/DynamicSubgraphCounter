@@ -14,8 +14,8 @@
  * @return int
  */
 COUNTER_TYPE HSubgraphCounts::getNrClawsWithEdge(ILV *head, ILV *tail) {
-    COUNTER_TYPE deg_h = graph->getUndirectedDegree(head) - 1;
-    COUNTER_TYPE deg_t = graph->getUndirectedDegree(tail) - 1;
+    COUNTER_TYPE deg_h = head->getUndirectedDegree() - 1;
+    COUNTER_TYPE deg_t = tail->getUndirectedDegree() - 1;
 
     COUNTER_TYPE ret{0};
     if (deg_t >= 2) {
@@ -41,8 +41,8 @@ COUNTER_TYPE HSubgraphCounts::getNrTPathsWithEdge(ILV *head, ILV *tail) {
     bool tailHigh{is_high(tail)};
     COUNTER_TYPE ret{0};
     // 1. Edge is in center of path
-    ret += (graph->getUndirectedDegree(head) - 1) *
-               (graph->getUndirectedDegree(tail) - 1) -
+    ret += (head->getUndirectedDegree() - 1) *
+               (tail->getUndirectedDegree() - 1) -
            getNrTriangleWithEdge(head, tail);
 
     // 2. Path starts with edge + next vertex in path has low degree
@@ -53,7 +53,7 @@ COUNTER_TYPE HSubgraphCounts::getNrTPathsWithEdge(ILV *head, ILV *tail) {
 
         if (other_is_high) {
             pathsStartingWithEdge = StrucCount.getNrvLV(other) -
-                                    (graph->getUndirectedDegree(low) - 1);
+                                    (low->getUndirectedDegree() - 1);
         }
         StrucCount.forEachLowNeighbor(low, {other}, nullptr, [&](auto x) {
 #if ENABLE_DEEPER_STATS
@@ -63,9 +63,9 @@ COUNTER_TYPE HSubgraphCounts::getNrTPathsWithEdge(ILV *head, ILV *tail) {
                 if (other_is_high) {
                     --pathsStartingWithEdge;
                 }
-                ret += (graph->getUndirectedDegree(x) - 2);
+                ret += (x->getUndirectedDegree() - 2);
             } else {
-                ret += graph->getUndirectedDegree(x) - 1;
+                ret += x->getUndirectedDegree() - 1;
             }
         });
     };
@@ -90,11 +90,11 @@ COUNTER_TYPE HSubgraphCounts::getNrTPathsWithEdge(ILV *head, ILV *tail) {
 #endif
         bool h_tail = edge_exist(h, tail);
         if (h_tail) {
-            COUNTER_TYPE tmp = 2 * (graph->getUndirectedDegree(h) - 2);
+            COUNTER_TYPE tmp = 2 * (h->getUndirectedDegree() - 2);
             if (tmp > 0)
                 ret += tmp;
         } else {
-            COUNTER_TYPE tmp = graph->getUndirectedDegree(h) - 1;
+            COUNTER_TYPE tmp = h->getUndirectedDegree() - 1;
             if (tmp > 0)
                 ret += tmp;
         }
@@ -106,7 +106,7 @@ COUNTER_TYPE HSubgraphCounts::getNrTPathsWithEdge(ILV *head, ILV *tail) {
 #endif
         bool h_head = edge_exist(h, head);
         if (!h_head) {
-            COUNTER_TYPE tmp = graph->getUndirectedDegree(h) - 1;
+            COUNTER_TYPE tmp = h->getUndirectedDegree() - 1;
             if (tmp > 0)
                 ret += tmp;
         }
@@ -280,8 +280,8 @@ COUNTER_TYPE HSubgraphCounts::getNrPawsWithEdge(ILV *head, ILV *tail,
                                                 COUNTER_TYPE tTail,
                                                 COUNTER_TYPE tHeadTail) {
     COUNTER_TYPE ret{0};
-    COUNTER_TYPE deg_head = graph->getUndirectedDegree(head);
-    COUNTER_TYPE deg_tail = graph->getUndirectedDegree(tail);
+    COUNTER_TYPE deg_head = head->getUndirectedDegree();
+    COUNTER_TYPE deg_tail = tail->getUndirectedDegree();
 
     // 1. edge is the arm of the paw
     ret += tHead + tTail - 2 * tHeadTail;
@@ -297,7 +297,7 @@ COUNTER_TYPE HSubgraphCounts::getNrPawsWithEdge(ILV *head, ILV *tail,
             ++iterate_h;
 #endif
             if (edge_exist(tail, h))
-                ret += graph->getUndirectedDegree(h) - 2;
+                ret += h->getUndirectedDegree() - 2;
         });
     } else {
         StrucCount.forLowerDegree(head, tail, [&](auto low, auto any) {
@@ -306,7 +306,7 @@ COUNTER_TYPE HSubgraphCounts::getNrPawsWithEdge(ILV *head, ILV *tail,
                 ++iterate_neighbor;
 #endif
                 if (edge_exist(x, any)) {
-                    ret += graph->getUndirectedDegree(x) - 2;
+                    ret += x->getUndirectedDegree() - 2;
                 }
             });
         });

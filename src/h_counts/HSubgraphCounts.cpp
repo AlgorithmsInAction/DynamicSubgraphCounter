@@ -314,7 +314,7 @@ void HSubgraphCounts::sTriangleArcChange(const Algora::Arc *a,
 
     operation(sTriangle, head->getId(), sTriangleCount(tail, head, head));
     operation(sTriangle, tail->getId(), sTriangleCount(head, tail, tail));
-    if (graph->getUndirectedDegree(head) < graph->getUndirectedDegree(tail)) {
+    if (head->getUndirectedDegree() < tail->getUndirectedDegree()) {
         for (auto const &a1 : head->getEdges()) {
 
             auto s = CAST_ILV(a1->getOther(head));
@@ -415,8 +415,8 @@ void HSubgraphCounts::sClawArcChange(const Algora::Arc *a,
                                      IncOrDecSingleKey *operation) {
     ILV *head = CAST_ILV(a->getHead());
     ILV *tail = CAST_ILV(a->getTail());
-    int deg_h = graph->getUndirectedDegree(head) - 1;
-    int deg_t = graph->getUndirectedDegree(tail) - 1;
+    int deg_h = head->getUndirectedDegree() - 1;
+    int deg_t = tail->getUndirectedDegree() - 1;
 
     for (auto s : this->CurrentObservedVertices) {
         operation(sClaw, s.first->getId(),

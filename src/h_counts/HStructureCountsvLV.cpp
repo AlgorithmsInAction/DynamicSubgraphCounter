@@ -62,8 +62,8 @@ void HStructureCounts::vLVArcChange(const Algora::Arc *a,
         deg_h = vPart->getDegreeWithoutRemoved(head);
         deg_t = vPart->getDegreeWithoutRemoved(tail);
     } else {
-        deg_h = graph->getUndirectedDegree(head);
-        deg_t = graph->getUndirectedDegree(tail);
+        deg_h = head->getUndirectedDegree();
+        deg_t = tail->getUndirectedDegree();
     }
 
     auto head_low = is_low(head);
