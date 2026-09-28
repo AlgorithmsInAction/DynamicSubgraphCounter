@@ -307,8 +307,8 @@ void ESubgraphCounts::DiamondArcChange(const Algora::Arc *a,
                 if (v_is_high && x_is_high) {
                     increment += StrucCount.getNrs2(x, v) - 1;
                 } else {
-                    COUNTER_TYPE dx = graph->getUndirectedDegree(x);
-                    COUNTER_TYPE dv = graph->getUndirectedDegree(v);
+                    COUNTER_TYPE dx = x->getUndirectedDegree();
+                    COUNTER_TYPE dv = v->getUndirectedDegree();
                     auto *v1 = dx > dv ? v : x;
                     auto *v2 = dx > dv ? x : v;
 
@@ -369,8 +369,8 @@ void ESubgraphCounts::tPathArcChange(const Algora::Arc *a,
                                      CounterUpdate *operation) {
     auto *head = CAST_ILV(a->getHead());
     auto *tail = CAST_ILV(a->getTail());
-    COUNTER_TYPE d1 = graph->getUndirectedDegree(head);
-    COUNTER_TYPE d2 = graph->getUndirectedDegree(tail);
+    COUNTER_TYPE d1 = head->getUndirectedDegree();
+    COUNTER_TYPE d2 = tail->getUndirectedDegree();
     bool head_high{is_high(head)};
     bool tail_high{is_high(tail)};
 
@@ -407,7 +407,7 @@ void ESubgraphCounts::tPathArcChange(const Algora::Arc *a,
 #endif
                 if (edge_exist(highV, v1)) {
                     // v2 - v1 - H - any
-                    increment += (graph->getUndirectedDegree(highV) - 1) -
+                    increment += (highV->getUndirectedDegree() - 1) -
                                  edge_exist(highV, v2);
                 }
 
@@ -434,7 +434,7 @@ void ESubgraphCounts::tPathArcChange(const Algora::Arc *a,
                 ++iterate_neighbor;
 #endif
                 increment +=
-                    (graph->getUndirectedDegree(x) - 1) - edge_exist(x, v2);
+                    (x->getUndirectedDegree() - 1) - edge_exist(x, v2);
             });
         }
     };
@@ -460,8 +460,8 @@ void ESubgraphCounts::pawArcChange(const Algora::Arc *a,
     ILV *tail = CAST_ILV(a->getTail());
     bool head_high{is_high(head)};
     bool tail_high{is_high(tail)};
-    COUNTER_TYPE d1 = graph->getUndirectedDegree(head);
-    COUNTER_TYPE d2 = graph->getUndirectedDegree(tail);
+    COUNTER_TYPE d1 = head->getUndirectedDegree();
+    COUNTER_TYPE d2 = tail->getUndirectedDegree();
 
     COUNTER_TYPE increment{0};
     bool done{false};
@@ -530,7 +530,7 @@ void ESubgraphCounts::pawArcChange(const Algora::Arc *a,
 
             if (edge_exist(h, head) && edge_exist(h, tail)) {
                 nr_t++;
-                increment += graph->getUndirectedDegree(h) - 2;
+                increment += h->getUndirectedDegree() - 2;
             }
         });
         increment += StrucCount.getNrs4(head, tail);
@@ -541,7 +541,7 @@ void ESubgraphCounts::pawArcChange(const Algora::Arc *a,
                 ++iterate_neighbor;
 #endif
                 if (edge_exist(x, other)) {
-                    increment += graph->getUndirectedDegree(x) - 2;
+                    increment += x->getUndirectedDegree() - 2;
                     nr_t += 1;
                 }
             });
