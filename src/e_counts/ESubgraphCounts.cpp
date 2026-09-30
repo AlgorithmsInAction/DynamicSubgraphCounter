@@ -6,6 +6,7 @@
 #include <boost/math/special_functions/math_fwd.hpp>
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 /**
  * @brief prepares the algorithm by introducing all necessary observers
@@ -465,6 +466,7 @@ void ESubgraphCounts::pawArcChange(const Algora::Arc *a,
 
     COUNTER_TYPE increment{0};
     bool done{false};
+    std::vector<ILV *> eligibleNeighbors;
 
     // 1. New edge is arm: Find triangle x-y-v, combined with v-other this is
     // a paw!
@@ -501,15 +503,21 @@ void ESubgraphCounts::pawArcChange(const Algora::Arc *a,
                 });
             });
         } else {
+            eligibleNeighbors.clear();
             forEachNeighbor(v, {other}, [&](auto x) {
-                forEachNeighbor(v, {other}, x, [&](auto y) {
+                eligibleNeighbors.push_back(x);
+            });
+            for (size_t i = 0; i < eligibleNeighbors.size(); ++i) {
+                auto x = eligibleNeighbors[i];
+                for (size_t j = 0; j < i; ++j) {
+                    auto y = eligibleNeighbors[j];
 #if ENABLE_DEEPER_STATS
                     iterate_neighbor += 2;
 #endif
                     if (edge_exist(x, y))
                         ++increment;
-                });
-            });
+                }
+            }
         }
     };
 
