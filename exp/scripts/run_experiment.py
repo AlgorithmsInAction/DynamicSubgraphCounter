@@ -83,8 +83,9 @@ def h_config(algo: str, factor: str, extra: tuple[str, ...] = ()) -> Config:
     return Config(f"{algo}_h{factor}", ("-a", algo, "-p", "hindex", "--gradual_factor", factor) + extra)
 
 
-HHH_best = ("--highAnchorsOnly", "--extraAux")
-EGST_best = ("--highAnchorsOnly", "--direct")
+HHH_H = ("--highAnchorsOnly",)
+HHH_HA = ("--highAnchorsOnly", "--extraAux")
+EGST_HD = ("--highAnchorsOnly", "--direct")
 
 
 def jobs_for(name: str) -> list[Job]:
@@ -101,28 +102,28 @@ def jobs_for(name: str) -> list[Job]:
                     Config("hhh_H_orig_e0.417" if "--highAnchorsOnly" in j.config.args else "hhh_base_orig_e0.417", j.config.args),
                     j.attempt, j.data_set, j.timeout) for j in jobs]
     elif name == "fig_5_1_hhh_epsilon":
-        add(ES, ["all"], [eps_config("hhh", "orig", e, HHH_best + ("--count_stats", "--partition-stats"))
+        add(ES, ["all"], [eps_config("hhh", "orig", e, HHH_HA + ("--count_stats", "--partition-stats"))
                            for e in frange(3, 12, 30)])
     elif name == "fig_5_2_hhh_partitions":
-        configs = [eps_config("hhh", mode, e, HHH_best) for mode in ("orig", "soft", "lazy", "late")
+        configs = [eps_config("hhh", mode, e, HHH_HA) for mode in ("orig", "soft", "lazy", "late")
                    for e in frange(3, 12, 30)]
-        configs += [h_config("hhh", f"{1 + 1 / (2 ** x):.6f}", HHH_best) for x in range(11)]
+        configs += [h_config("hhh", f"{1 + 1 / (2 ** x):.6f}", HHH_HA) for x in range(11)]
         add(ES, ["all"], configs)
     elif name == "fig_5_3_egst_partitions":
-        configs = [eps_config("egst", mode, e, EGST_best) for mode in ("lazy", "late")
+        configs = [eps_config("egst", mode, e, EGST_HD) for mode in ("lazy", "late")
                    for e in frange(9, 14, 30)]
-        configs += [h_config("egst", f"{1 + 1 / (2 ** x):.6f}", EGST_best) for x in range(11)]
+        configs += [h_config("egst", f"{1 + 1 / (2 ** x):.6f}", EGST_HD) for x in range(11)]
         add(ES, ["all"], configs)
     elif name == "fig_5_4_static_baselines":
         configs = [Config("ob", ("-a", "ob")), Config("escape", ("-a", "escape")),
                    eps_config("hhh", "orig", "0.417"), h_config("egst", "2"),
-                   eps_config("hhh", "late", "0.2", HHH_best), h_config("egst", "1.0625", EGST_best)]
+                   eps_config("hhh", "late", "0.2", HHH_HA), h_config("egst", "1.0625", EGST_HD)]
         add(ES, ["all"], configs, "150k", 24)
     elif name == "fig_5_5_dynamic_baselines":
         patterns = ["triangle", "tPath", "paw", "fCycle", "diamond", "fClique", "all"]
         for pattern in patterns:
             if pattern == "all":
-                hc, ec = eps_config("hhh", "late", "0.2", HHH_best), h_config("egst", "1.0625", EGST_best)
+                hc, ec = eps_config("hhh", "late", "0.2", HHH_HA), h_config("egst", "1.0625", EGST_HD)
             elif pattern == "triangle":
                 hc = Config("hhh_scan", ("-a", "hhh", "-p", "mock",
                                          "--highAnchorsOnly", "--no_aux_for_t"))
@@ -131,11 +132,11 @@ def jobs_for(name: str) -> list[Job]:
                 hc = Config("hhh_scan", ("-a", "hhh", "-p", "mock", "--highAnchorsOnly"))
                 ec = Config("egst_scan", ("-a", "egst", "-p", "mock", "--highAnchorsOnly", "--direct"))
             elif pattern == "tPath":
-                hc, ec = eps_config("hhh", "late", "0.333", ("--highAnchorsOnly",)), eps_config("egst", "late", "0.333", EGST_best)
+                hc, ec = eps_config("hhh", "late", "0.333", ("--highAnchorsOnly",)), eps_config("egst", "late", "0.333", EGST_HD)
             elif pattern == "diamond":
-                hc, ec = eps_config("hhh", "late", "0.233", ("--highAnchorsOnly",)), h_config("egst", "1.0625", EGST_best)
+                hc, ec = eps_config("hhh", "late", "0.233", ("--highAnchorsOnly",)), h_config("egst", "1.0625", EGST_HD)
             else:
-                hc, ec = eps_config("hhh", "late", "0.233", ("--highAnchorsOnly",)), eps_config("egst", "late", "0.333" if pattern == "fCycle" else "0.433", EGST_best)
+                hc, ec = eps_config("hhh", "late", "0.233", ("--highAnchorsOnly",)), eps_config("egst", "late", "0.333" if pattern == "fCycle" else "0.433", EGST_HD)
             add(ES, [pattern], [hc, ec], timeout=5)
         # Match the supplied reference grid: Graphflow and SymBi support all
         # six queries; IEDyn and TurboFlux are evaluated on the path query;
@@ -152,8 +153,8 @@ def jobs_for(name: str) -> list[Job]:
         for attempt, graph, pattern in itertools.product(range(1, 4), ES, ("triangle", "all")):
             jobs.append(Job(graph, pattern, Config("dna", ()), attempt, "2m", 5, "dna"))
     elif name == "fig_5_6_full_set":
-        add(FS, ["all"], [eps_config("hhh", "orig", "0.417", HHH_best), eps_config("hhh", "late", "0.2", HHH_best),
-                           h_config("egst", "2", EGST_best), h_config("egst", "1.0625", EGST_best)], "full", 24)
+        add(FS, ["all"], [eps_config("hhh", "orig", "0.417", HHH_HA), eps_config("hhh", "late", "0.2", HHH_HA),
+                           h_config("egst", "2", EGST_HD), h_config("egst", "1.0625", EGST_HD)], "full", 24)
     elif name == "fig_a_1_extra_aux":
         required = Config("hhh_required_aux", ("-a", "hhh", "-p", "epstab", "-e", "0.417", "--highAnchorsOnly"))
         all_aux = Config("hhh_all_aux", ("-a", "hhh", "-p", "epstab", "-e", "0.417", "--highAnchorsOnly", "--extraAux"))
@@ -167,16 +168,16 @@ def jobs_for(name: str) -> list[Job]:
         for mode in ("orig", "soft", "lazy", "late"):
             factors = ("1", "1.25", "1.5", "2", "3", "5", "8", "13", "21") if mode == "lazy" else ("1.5", "2", "3", "5", "8", "13", "21")
             for factor in factors:
-                base = eps_config("hhh", mode, "0.2", HHH_best)
+                base = eps_config("hhh", mode, "0.2", HHH_HA)
                 configs.append(Config(f"{base.label}_rho{factor}", base.args + ("-r", factor)))
         add(ES, ["all"], configs)
     elif name == "fig_a_3_egst_optimizations":
-        configs = [h_config("egst", "2", flags) for flags in ((), ("--direct",), EGST_best, ("--highAnchorsOnly",))]
+        configs = [h_config("egst", "2", flags) for flags in ((), ("--direct",), EGST_HD, ("--highAnchorsOnly",))]
         configs = [Config(f"egst_{i}", c.args) for i, c in zip(("base", "D", "HD", "H"), configs)]
         add(ES, ["all"], configs)
     elif name in ("fig_a_4_hhh_single_patterns", "fig_a_5_egst_single_patterns"):
         algo = "hhh" if "hhh" in name else "egst"
-        extra = HHH_best if algo == "hhh" else EGST_best
+        extra = HHH_H if algo == "hhh" else EGST_HD
         modes = ("orig", "soft", "lazy", "late") if algo == "hhh" else ("lazy", "late")
         hconfigs = [h_config(algo, f"{1 + 1 / (2 ** x):.6f}", extra) for x in range(11)]
         for pattern in ("triangle", "tPath", "paw", "fCycle", "diamond", "fClique"):
