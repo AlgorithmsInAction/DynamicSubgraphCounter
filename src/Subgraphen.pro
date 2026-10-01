@@ -26,6 +26,9 @@ CONFIG += c++17
 # OB and ESCAPE both provide a Graph.cpp. Preserve each source path in its
 # object-file path so qmake does not collapse both translation units to Graph.o.
 CONFIG += object_parallel_to_source
+isEmpty(REFERENCE_CODE): REFERENCE_CODE = ON
+!equals(REFERENCE_CODE, ON):!equals(REFERENCE_CODE, OFF): error("REFERENCE_CODE must be ON or OFF")
+equals(REFERENCE_CODE, ON): DEFINES += WITH_REFERENCE_CODE
 QMAKE_CXXFLAGS += -pthread
 LIBS += -pthread
 
@@ -86,14 +89,7 @@ SOURCES += main.cpp\
 	h_vanilla/HVStructureCountsuHv.cpp \
 	h_vanilla/HVStructureCountsvLV.cpp \
 	h_vanilla/HVSubgraphCountsExtended.cpp \
-	oaqc/DynamizedOBASubgraphCounts.cpp \
-	h_counts/HSubgraphCountsS.cpp \
-	../deps/oaqc/src/Graph.cpp\
-	../deps/oaqc/src/QuadCensus.cpp\
-	escape/DynamizedESCAPE.cpp \
-	../deps/escape/Graph.cpp \
-	../deps/escape/GraphIO.cpp \
-	../deps/escape/TriangleProgram.cpp \
+	h_counts/HSubgraphCountsS.cpp
     
 
 HEADERS += test.h\
@@ -108,34 +104,45 @@ HEADERS += test.h\
 	h_vanilla/HVSubgraphCounts.h \
 	e_counts/ESubgraphCounts.h \
 	e_counts/ESubgraphCounts.h \
-	oaqc/DynamizedOBASubgraphCounts.h \
-	../deps/escape/Escape/AlmostFiveClique.h \
-	../deps/escape/Escape/Digraph.h \
-	../deps/escape/Escape/ErrorCode.h \
-	../deps/escape/Escape/FiveFromCycleClique.h \
-	../deps/escape/Escape/FiveTrees.h \
-	../deps/escape/Escape/GetAllCounts.h \
-	../deps/escape/Escape/GraphIO.h \
-	../deps/escape/Escape/Triadic.h \
-	../deps/escape/Escape/Utils.h \
-	../deps/escape/Escape/Conversion.h \
-	../deps/escape/Escape/EdgeHash.h \
-	../deps/escape/Escape/FiveCycle.h \
-	../deps/escape/Escape/FiveFromTriangles.h \
-	../deps/escape/Escape/FourVertex.h \
-	../deps/escape/Escape/Graph.h \
-	../deps/escape/Escape/JointSort.h \
-	../deps/escape/Escape/TriangleProgram.h \
-	../deps/escape/Escape/WedgeCollisions.h \
-	escape/DynamizedESCAPE.h \
 	StructureCounts.h \
 	SubgraphCounts.h \
 	UndirectedFourSubgraphCounts.h \
-	../deps/oaqc/src/Graph.h\
-	../deps/oaqc/src/QuadCensus.h\
 	util/streaming_stats.h\
 	static/StaticAlgorithm.h \
 	static/StaticWorkerPool.h
+
+equals(REFERENCE_CODE, ON) {
+    SOURCES += oaqc/DynamizedOBASubgraphCounts.cpp \
+        ../deps/oaqc/src/Graph.cpp \
+        ../deps/oaqc/src/QuadCensus.cpp \
+        escape/DynamizedESCAPE.cpp \
+        ../deps/escape/Graph.cpp \
+        ../deps/escape/GraphIO.cpp \
+        ../deps/escape/TriangleProgram.cpp
+    HEADERS += oaqc/DynamizedOBASubgraphCounts.h \
+        escape/DynamizedESCAPE.h \
+        ../deps/oaqc/src/Graph.h \
+        ../deps/oaqc/src/QuadCensus.h \
+        ../deps/escape/Escape/AlmostFiveClique.h \
+        ../deps/escape/Escape/Digraph.h \
+        ../deps/escape/Escape/ErrorCode.h \
+        ../deps/escape/Escape/FiveFromCycleClique.h \
+        ../deps/escape/Escape/FiveTrees.h \
+        ../deps/escape/Escape/GetAllCounts.h \
+        ../deps/escape/Escape/GraphIO.h \
+        ../deps/escape/Escape/Triadic.h \
+        ../deps/escape/Escape/Utils.h \
+        ../deps/escape/Escape/Conversion.h \
+        ../deps/escape/Escape/EdgeHash.h \
+        ../deps/escape/Escape/FiveCycle.h \
+        ../deps/escape/Escape/FiveFromTriangles.h \
+        ../deps/escape/Escape/FourVertex.h \
+        ../deps/escape/Escape/Graph.h \
+        ../deps/escape/Escape/JointSort.h \
+        ../deps/escape/Escape/TriangleProgram.h \
+        ../deps/escape/Escape/WedgeCollisions.h
+    INCLUDEPATH += $$PWD/../deps/oaqc/src $$PWD/../deps/escape
+}
 
 CONFIG(release, debug|release) {
   message("Target: Release")
@@ -151,8 +158,6 @@ CONFIG(debug, debug|release) {
 }
 
 INCLUDEPATH += $$PWD/../../AlgoraCore/src
-INCLUDEPATH += $$PWD/../deps/oaqc/src
-INCLUDEPATH += $$PWD/../deps/escape
 DEPENDPATH += $$PWD/../../AlgoraCore/src
 
 

@@ -93,6 +93,11 @@ Once the dependencies are set up, you can proceed with the compilation process i
   ```bash
   ./easyCompile
   ```
+
+Reference implementations (OB and ESCAPE) are included by default. To build
+without fetching or compiling them, run `./easyCompile --without-reference-code`.
+For a direct qmake build, pass `REFERENCE_CODE=OFF` (the default is `ON`).
+In this configuration, `-a ob` and `-a escape` report that they are unavailable.
 ---
 
 

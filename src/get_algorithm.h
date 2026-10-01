@@ -5,10 +5,12 @@
 
 #include "config.h"
 #include "e_counts/ESubgraphCounts.h"
+#ifdef WITH_REFERENCE_CODE
 #include "escape/DynamizedESCAPE.h"
+#include "oaqc/DynamizedOBASubgraphCounts.h"
+#endif
 #include "h_counts/HSubgraphCounts.h"
 #include "h_vanilla/HVSubgraphCounts.h"
-#include "oaqc/DynamizedOBASubgraphCounts.h"
 #include "partition/EpsilonTab.h"
 #include "partition/HIndex.h"
 #include "partition/MockPartition.h"
@@ -26,12 +28,14 @@ SubgraphCounts *get_algorithm(Config &config) {
     case EGST:
         return new ESubgraphCounts(config);
         break;
+#ifdef WITH_REFERENCE_CODE
     case OB:
         return new DynamizedOBASubgraphCounts(config);
         break;
     case ESCAPE:
         return new DynamizedESCAPE(config);
         break;
+#endif
     default:
         exit(0);
         break;
