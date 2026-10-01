@@ -1,0 +1,269 @@
+diff --git a/Escape/AlmostFiveClique.h b/Escape/AlmostFiveClique.h
+index c149cfc..7f18c95 100644
+--- a/Escape/AlmostFiveClique.h
++++ b/Escape/AlmostFiveClique.h
+@@ -1,3 +1,4 @@
++// Modified in this fork (2026): memory-leak fixes.
+ #ifndef ESCAPE_ALMOSTFIVECLIQUE_H_
+ #define ESCAPE_ALMOSTFIVECLIQUE_H_
+ 
+@@ -110,6 +111,7 @@ EdgeIdx almostFiveClique(CGraph *gsorted)
+     if (DEBUG)
+         printf("Total found %lld\n",ret);
+ //     return ret - 10*fivecliques;
++    delete[] triangles;
+     return ret;
+ }
+ 
+@@ -176,6 +178,7 @@ EdgeIdx oldAlmostFiveClique(CGraph *gsorted)
+     if (DEBUG)
+         printf("Total found %lld\n",ret);
+ //     return ret - 10*fivecliques;
++    delete[] triangles;
+     return ret;
+ }
+ 
+@@ -256,9 +259,8 @@ EdgeIdx testingAlmostFiveClique(CGraph *gsorted)
+     if (DEBUG)
+         printf("Total found %lld\n",ret);
+ //     return ret - 10*fivecliques;
++    delete[] triangles;
+     return ret;
+ }
+ #endif
+ 
+-
+-
+diff --git a/Escape/FiveCycle.h b/Escape/FiveCycle.h
+index a0051c5..b8a0a5b 100644
+--- a/Escape/FiveCycle.h
++++ b/Escape/FiveCycle.h
+@@ -1,3 +1,4 @@
++// Modified in this fork (2026): memory-leak fixes.
+ #ifndef ESCAPE_FIVECYCLE_H_
+ #define ESCAPE_FIVECYCLE_H_
+ 
+@@ -121,6 +122,7 @@ EdgeIdx fiveCycleCounter(CGraph *gout, CGraph *gin)
+        }
+    }
+ 
++   delete[] wedge_count;
+    return ret;
+ }
+ 
+@@ -135,5 +137,3 @@ EdgeIdx fiveCycleCounter(CGraph *gout, CGraph *gin, EdgeIdx tailedtris)
+ 
+ #endif
+ 
+-
+-
+diff --git a/Escape/FiveFromCycleClique.h b/Escape/FiveFromCycleClique.h
+index 63e55a7..e6199d3 100644
+--- a/Escape/FiveFromCycleClique.h
++++ b/Escape/FiveFromCycleClique.h
+@@ -1,3 +1,4 @@
++// Modified in this fork (2026): memory-leak fixes.
+ #ifndef ESCAPE_FIVEFROMCYCLECLIQUE_H_
+ #define ESCAPE_FIVEFROMCYCLECLIQUE_H_
+ 
+@@ -187,6 +188,8 @@ if(DEBUG)
+ 
+    ret.tailedfourcycles = (long)(type1tailed + type2tailed + type3tailed + 0.5);
+    ret.hattedfourcycles = (long)(type1hatted/2 + type2hatted + type3hatted + 0.5);
++   delete[] outout_count;
++   delete[] inout_count;
+    return ret;
+ }
+ 
+@@ -296,10 +299,13 @@ CliqueBased fourCliqueBasedCounter(CGraph *g, CGraph *gout, TriangleInfo *info)
+                     }
+             }
+         }
++    delete[] dummy;
++    delete[] triends;
++    delete[] k4ends;
++    delete[] ind_from_i;
++    delete[] ind_from_j;
+     return ret;
+ }
+ 
+ #endif
+ 
+-
+-
+diff --git a/Escape/FourVertex.h b/Escape/FourVertex.h
+index 4fb5e9b..cffa751 100644
+--- a/Escape/FourVertex.h
++++ b/Escape/FourVertex.h
+@@ -1,3 +1,4 @@
++// Modified in this fork (2026): memory-leak fixes.
+ #ifndef ESCAPE_FOURVERTEX_H_
+ #define ESCAPE_FOURVERTEX_H_
+ 
+@@ -86,7 +87,7 @@ SomeFourPatterns easyFourCounter(CGraph *g, CGraph *gout)
+         }
+         
+     ret.threepaths -= 3*info.total;
+-    
++    delTriangleInfo(info);
+     return ret;
+ }
+ 
+@@ -126,7 +127,7 @@ SomeFourPatterns oldeasyFourCounter(CGraph *g, CGraph *gout)
+         }
+         
+     ret.threepaths -= 3*info.total;
+-    
++    delTriangleInfo(info);
+     return ret;
+ }
+ 
+@@ -178,6 +179,7 @@ EdgeIdx fourCycleCounter(CGraph *gout, CGraph *gin)
+            }
+        }
+    }
++   delete[] wedge_count;
+    return ret;
+ }
+ 
+@@ -285,6 +287,10 @@ EdgeIdx oldfourCycleCounter(CGraph *gout, CGraph *gin)
+    type1 = type1/2; // every type1 4-cycle was counted twice
+    ret = type1 + type2 + type3;
+ //    printf("type1 = %ld, type2 = %ld, type3 = %ld\n",type1,type2,type3);
++   delete[] outout;
++   delete[] inout;
++   delete[] outout_runs;
++   delete[] outout_ends;
+    return ret;
+ }
+ 
+@@ -347,6 +353,7 @@ EdgeIdx fourCliqueCounter(CGraph *gout)
+                 }
+             }
+         }
++    delete[] triends;
+     return ret;
+ }
+ 
+@@ -385,11 +392,9 @@ EdgeIdx oldfourCliqueCounter(CGraph *gout)
+                     }
+                 }
+         }
++    delete[] triends;
+     return ret;
+ }
+ 
+ 
+ #endif
+-
+-
+-
+diff --git a/Escape/GetAllCounts.h b/Escape/GetAllCounts.h
+index c45564d..0d35543 100644
+--- a/Escape/GetAllCounts.h
++++ b/Escape/GetAllCounts.h
+@@ -1,3 +1,4 @@
++// Modified in this fork (2026): memory-leak fixes.
+ #ifndef ESCAPE_GETALLCOUNTS_H_
+ #define ESCAPE_GETALLCOUNTS_H_
+ 
+@@ -53,6 +54,7 @@ void getAllThree(CGraph *cg, CDAG *dag, double (&nonInd)[4])
+ 
+     info = betterWedgeEnumerator(&(dag->outlist));
+     nonInd[3] = info.total;
++    delTriangleInfo(info);
+ }
+ 
+ 
+@@ -104,6 +106,7 @@ void getAllFour(CGraph *cg, CDAG *dag, double (&nonInd)[11])
+     nonInd[8] = fourcycles; 
+     nonInd[9] = four_info.chordalcycles;
+     nonInd[10] = fourcliques;
++    delTriangleInfo(tri_info);
+ }
+     
+ // This function generates all non-induced counts for 5-vertex patterns.
+@@ -214,8 +217,11 @@ void getAllFive(CGraph *cg, CDAG *dag, double (&nonIndFour)[11], double (&nonInd
+     nonIndFive[32] = almost_clique;
+     nonIndFive[33] = clique_related.fivecliques;
+ 
++    delTriangleInfo(tri_info);
++    delTriangleInfo(in_tri_info);
++    delete[] allTris.triangles;
++    delete[] allTris.trioffsets;
++
+ }
+  #endif
+ 
+-
+-
+diff --git a/Escape/WedgeCollisions.h b/Escape/WedgeCollisions.h
+index 0dda18c..1fbd8be 100644
+--- a/Escape/WedgeCollisions.h
++++ b/Escape/WedgeCollisions.h
+@@ -1,3 +1,4 @@
++// Modified in this fork (2026): memory-leak fixes.
+ #ifndef ESCAPE_WEDGECOLLISIONS_H_
+ #define ESCAPE_WEDGECOLLISIONS_H_
+ 
+@@ -438,6 +439,10 @@ CollisionPatterns newWedgeBasedCollision(CGraph *g, CGraph *gout)
+             }
+         }
+    }
++   for (i=0; i < g->nVertices; i++)
++       delete[] wedge[i];
++   delete[] wedge;
++   delete[] wedge_count;
+    return ret;
+ }
+ 
+@@ -547,6 +552,10 @@ CollisionPatterns wedgeBasedCollision(CGraph *g, CGraph *gout)
+             }
+         }
+    }
++   delete[] wedge;
++   delete[] wedge_count;
++   delete[] total;
++   delete[] mem_end_seen;
+    return ret;
+ }
+ 
+@@ -933,6 +942,8 @@ CollisionPatterns fromTriangleList(CGraph *g, TriangleList *allTris)
+         }
+    }
+    ret.chordalWedgeCol = ret.chordalWedgeCol/2;
++   delete[] wedge_count;
++   delete[] diamond_count;
+    return ret;
+ }
+ 
+@@ -940,5 +951,3 @@ CollisionPatterns fromTriangleList(CGraph *g, TriangleList *allTris)
+ 
+ 
+ #endif
+-
+-
+diff --git a/Graph.cpp b/Graph.cpp
+index 2990b6f..794fd9e 100644
+--- a/Graph.cpp
++++ b/Graph.cpp
+@@ -1,3 +1,4 @@
++// Modified in this fork (2026): memory-leak fixes.
+ #include "Escape/Graph.h"
+ #include "Escape/JointSort.h"
+ #include <algorithm>
+@@ -250,6 +251,9 @@ CGraph CGraph::renameByDegreeOrder() const
+         ret.offsets[new_label+1] = current; // all neighbors of new_label have been added, so we set offset for new_label+1
+     }
+ 
++    delete[] deg_info;
++    delete[] mapping;
++    delete[] inverse;
+     return ret;
+ }
+ 
+@@ -290,4 +294,3 @@ CGraph Escape::makeCSC(Graph g, bool inPlace)
+ {
+   return makeCSR({g.nVertices, g.nEdges, g.dsts, g.srcs}, inPlace);
+ }
+-

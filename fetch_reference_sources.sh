@@ -7,6 +7,7 @@ ob_repo=${OB_REPO:-https://github.com/schochastics/oaqc.git}
 ob_ref=${OB_REF:-ef0117d7a7b5e2632c3a122fde859e3645b49ddb}
 escape_repo=${ESCAPE_REPO:-https://bitbucket.org/seshadhri/escape.git}
 escape_ref=${ESCAPE_REF:-master}
+escape_patch="$root/src/escape/memory-leaks.patch"
 
 mkdir -p "$deps"
 if [[ ! -d "$deps/oaqc/.git" ]]; then
@@ -17,6 +18,11 @@ git -C "$deps/oaqc" checkout -q "$ob_ref"
 
 if [[ ! -d "$deps/escape/.git" ]]; then
   git clone --depth 1 "$escape_repo" "$deps/escape"
+fi
+# The checkout is reused across builds. Remove only our previous patch before
+# switching revisions, then reapply it to the selected upstream source.
+if git -C "$deps/escape" apply --reverse --check "$escape_patch" 2>/dev/null; then
+  git -C "$deps/escape" apply --reverse "$escape_patch"
 fi
 if git -C "$deps/escape" fetch --depth 1 origin "$escape_ref" >/dev/null; then
   fetched_escape=1
@@ -36,3 +42,5 @@ fi
   echo "Cannot locate ESCAPE sources at revision $escape_ref" >&2
   exit 1
 }
+git -C "$deps/escape" apply --check "$escape_patch"
+git -C "$deps/escape" apply "$escape_patch"
