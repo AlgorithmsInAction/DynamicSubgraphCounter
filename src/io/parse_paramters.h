@@ -152,9 +152,19 @@ bool parse_algorithm(int argc, char *argv[], Config &config) {
     } else if (algo == "egst") {
         config.algo = Algo::EGST;
     } else if (algo == "ob") {
+#ifdef WITH_REFERENCE_CODE
         config.algo = Algo::OB;
+#else
+        std::cerr << "Algorithm 'ob' was not included in this build\n";
+        exit(1);
+#endif
     } else if (algo == "escape") {
+#ifdef WITH_REFERENCE_CODE
         config.algo = Algo::ESCAPE;
+#else
+        std::cerr << "Algorithm 'escape' was not included in this build\n";
+        exit(1);
+#endif
     } else {
         std::cerr << "Unknown algorithm: \'" << algo << "\'\n";
         exit(0);

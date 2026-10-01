@@ -24,12 +24,6 @@
 
 set -e
 
-# OB/oaqc and ESCAPE are third-party sources and are fetched only when a
-# compilation is requested.  Override repository/ref with OB_REPO, OB_REF,
-# ESCAPE_REPO, and ESCAPE_REF when reproducing an archived build.
-bash "$(dirname "$0")/fetch_reference_sources.sh"
-
-
 export QT_SELECT=qt5
 PRO_FILE="Subgraphen.pro"
 
@@ -37,14 +31,19 @@ CLEAN=0
 EXTRA_ARGS=""
 QMAKE=""
 SPEC="linux-g++-64"
+REFERENCE_CODE=ON
 
 function usage() {
-    echo "Usage: $0 [ --qmake <path/to/qmake> ] [ -c | --clean ] [ -g | --general ] [ -d | --debugsymbols] [ -p | --profiling] [ --clang ] [ -C | --compiler <compiler> ] [ -L | --linker <linker> ]"
+    echo "Usage: $0 [ --qmake <path/to/qmake> ] [ --without-reference-code ] [ -c | --clean ] [ -g | --general ] [ -d | --debugsymbols] [ -p | --profiling] [ --clang ] [ -C | --compiler <compiler> ] [ -L | --linker <linker> ]"
 }
 
 while [[ $# -gt 0 ]]
 do
 case $1 in
+    --without-reference-code)
+    REFERENCE_CODE=OFF
+    shift
+    ;;
     --qmake)
     QMAKE="$2"
     shift
@@ -95,12 +94,16 @@ case $1 in
 esac
 done
 
+if [ "$REFERENCE_CODE" = ON ]; then
+    bash "$(dirname "$0")/fetch_reference_sources.sh"
+fi
+
 [ -z "${QMAKE}" ] && QMAKE=$(which qmake 2>/dev/null) && echo "Using \"${QMAKE}\" for \"qmake\"."
 [ -z "${QMAKE}" ] && QMAKE=$(which qmake-qt5 2>/dev/null) && echo "Using \"${QMAKE}\" for \"qmake\"."
 [ -n "${QMAKE}" ] || eval 'echo "Binary \"qmake\" or \"qmake-qt5\" not found. Please specify its location explicitly via --qmake <path/to/qmake>." 1>&2; exit 1'
 [ -x "${QMAKE}" ] || eval 'echo "\"${QMAKE}\" is not an executable. Please specify the location of the qmake binary explicitly via --qmake <path/to/qmake>." 1>&2; exit 1'
 
-QMAKE_ARGS="-r -spec ${SPEC} ${EXTRA_ARGS} $@"
+QMAKE_ARGS="-r -spec ${SPEC} REFERENCE_CODE=${REFERENCE_CODE} ${EXTRA_ARGS} $@"
 QMAKE_ARGS_DEBUG="CONFIG+=debug"
 
 
