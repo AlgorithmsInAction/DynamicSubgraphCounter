@@ -15,7 +15,8 @@ subgraph-counting algorithms, integrated as dynamized baselines:
   `src/oaqc/`. Select it with `-a ob`.
 - **ESCAPE (Pinar, Seshadhri, and Vishal)** [5]:
   [upstream repository](https://bitbucket.org/seshadhri/escape). `easyCompile`
-  downloads the upstream `master` branch and uses those files directly when
+  downloads the upstream `master` branch, applies the source-only memory-leak
+  fixes in `src/escape/memory-leaks.patch`, and uses those files when
   compiling the project’s adapter in
   `src/escape/`. Select it with `-a escape`.
 
