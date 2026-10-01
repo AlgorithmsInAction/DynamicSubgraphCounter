@@ -539,8 +539,8 @@ COUNTER_TYPE HSubgraphCounts::getNrFCliquesWithEdge(ILV *head, ILV *tail) {
     bool head_high = is_high(head);
     bool tail_high = is_high(tail);
     COUNTER_TYPE ret{0};
-    int d1 = StrucCount.vPart->getLowDegree(head);
-    int d2 = StrucCount.vPart->getLowDegree(tail);
+    int d1 = head->getUndirectedDegree();
+    int d2 = tail->getUndirectedDegree();
     auto m = graph->getNumArcs(1);
 
     if (d1 * d1 > m && d2 * d2 > m) {
