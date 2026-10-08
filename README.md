@@ -91,6 +91,10 @@ For experiment reproduction, see the [experiment guide](exp/README.md).
 [5] A. Pinar, C. Seshadhri, and V. Vishal, “ESCAPE: Efficiently Counting All 5-Vertex Subgraphs,” in Proceedings of the 26th International Conference on World Wide Web, WWW 2017, Perth, Australia, April 3-7, 2017, R. Barrett, R. Cummings, E. Agichtein, and E. Gabrilovich, Eds., ACM, 2017, pp. 1431–1440. doi: 10.1145/3038912.3052597.
 
 
+## License
+
+See the [GNU GPLv3 license](LICENSE) and [third-party notices](NOTICE.md).
+
 ## Contributors
 
 - Kathrin Hanauer
