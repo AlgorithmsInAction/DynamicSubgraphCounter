@@ -37,8 +37,6 @@ struct Config {
     double epsilon;
     int lifetime{0}; // Set fixed lifetime for edges
     double timeout_in_s{0};
-    unsigned int workers{1}; // Parallel workers for static algorithms
-    unsigned int worker_block_size{1024};
 
     double recomputeFactor{2}; // Factor of how often to recompute
     bool soft_recompute{0};

@@ -29,8 +29,6 @@ CONFIG += object_parallel_to_source
 isEmpty(REFERENCE_CODE): REFERENCE_CODE = ON
 !equals(REFERENCE_CODE, ON):!equals(REFERENCE_CODE, OFF): error("REFERENCE_CODE must be ON or OFF")
 equals(REFERENCE_CODE, ON): DEFINES += WITH_REFERENCE_CODE
-QMAKE_CXXFLAGS += -pthread
-LIBS += -pthread
 
 TARGET = SubgraphCounter
 CONFIG -= app_bundle
@@ -108,8 +106,7 @@ HEADERS += test.h\
 	SubgraphCounts.h \
 	UndirectedFourSubgraphCounts.h \
 	util/streaming_stats.h\
-	static/StaticAlgorithm.h \
-	static/StaticWorkerPool.h
+	static/StaticSnapshot.h
 
 equals(REFERENCE_CODE, ON) {
     SOURCES += oaqc/DynamizedOBASubgraphCounts.cpp \

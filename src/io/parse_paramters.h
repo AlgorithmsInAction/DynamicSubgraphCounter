@@ -85,12 +85,6 @@ bool parse_algorithm(int argc, char *argv[], Config &config) {
 
     app.add_option("--timeout", config.timeout_in_s,
                    "Time in hours after what to stop");
-    app.add_option("-w,--worker", config.workers,
-                   "Workers for parallel static updates (OB or ESCAPE)")
-        ->check(CLI::Range(1u, 1024u));
-    app.add_option("--worker-block-size", config.worker_block_size,
-                   "Updates per precollected static worker block")
-        ->check(CLI::Range(1u, 1000000u));
 
     app.add_flag("--triangle", config.count_tCycles, "Calculate triangles");
     app.add_flag("--tPath", config.count_tPaths, "Calculate three paths");
@@ -168,13 +162,6 @@ bool parse_algorithm(int argc, char *argv[], Config &config) {
     } else {
         std::cerr << "Unknown algorithm: \'" << algo << "\'\n";
         exit(0);
-    }
-
-    if (config.workers > 1 && config.algo != Algo::OB &&
-        config.algo != Algo::ESCAPE) {
-        std::cerr << "--worker is only supported for static algorithms "
-                     "'ob' and 'escape'\n";
-        exit(1);
     }
 
     if (part == "epstab") {

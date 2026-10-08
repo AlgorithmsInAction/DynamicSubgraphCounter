@@ -6,8 +6,6 @@
 #include "graph.dyn/dynamicdigraph.h"
 #include "graph.incidencelist/incidencelistvertex.h"
 #include "graph/vertex.h"
-#include "Graph.h"
-#include "QuadCensus.h"
 #include "partition/VertexPartition.h"
 #include <boost/unordered/unordered_map_fwd.hpp>
 #include <chrono>

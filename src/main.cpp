@@ -24,11 +24,7 @@
 #include "io/konectnetworkreader.h"
 #include "io/output_generator.h"
 #include "io/parse_paramters.h"
-#include "Graph.h"
-#include "QuadCensus.h"
 #include "property/fastpropertymap.h"
-#include "static/StaticAlgorithm.h"
-#include "static/StaticWorkerPool.h"
 #include "util/graph_stats.h"
 #include "util/memory.h"
 #include "util/streaming_stats.h"
@@ -38,12 +34,6 @@ using namespace Algora;
 double readDynamicGraph(DynamicDiGraph &dyGraph, const std::string &filename,
                         const int lifetime_int);
 bool printInfos(const DynamicDiGraph &dyGraph, const double &time);
-std::pair<std::chrono::duration<double>, std::unique_ptr<oaqc::QuadCensus>>
-run_static_reference_algo(const DynamicDiGraph &dyGraph, const int counter,
-                          Config &config,
-                          std::unique_ptr<oaqc::QuadCensus> quad,
-                          unsigned long &nCount);
-
 int main(int argc, char *argv[]) {
 
     auto baseline = getPeakRSS();
@@ -76,15 +66,6 @@ int main(int argc, char *argv[]) {
 
     std::vector<StreamingStats> counting_stats(7, 0);
 
-    StaticAlgorithm *static_algorithm =
-        dynamic_cast<StaticAlgorithm *>(SubCounts);
-    std::unique_ptr<StaticWorkerPool> static_workers;
-    if (config.workers > 1) {
-        if (!static_algorithm)
-            throw std::runtime_error(
-                "parallel workers require a static algorithm");
-    }
-
     auto write_step = [&](int step) {
         auto currentDynTime = SubCounts->getCurrentDynTime();
         total_stats.add(currentDynTime.count());
@@ -116,59 +97,13 @@ int main(int argc, char *argv[]) {
         graph_stats.prepare();
     }
 
-    if (config.workers > 1) {
-        // Precollect compact changes and one graph checkpoint per block.
-        // Workers reconstruct all per-step tables locally, removing the
-        // former single-threaded full-table producer bottleneck.
-        std::vector<StaticUpdateBlock> blocks;
-        StaticUpdateBlock block;
-        block.first_step = 1;
-        block.checkpoint = static_algorithm->snapshot_current_graph();
-        block.steps.reserve(config.worker_block_size);
-
-        while (dyGraph.applyNextOperation()) {
-            ++counter;
-            if (config.print_debug)
-                std::cout << "Change " << counter << std::endl;
-
-            StaticUpdateStep step;
-            step.num_vertices = static_algorithm->current_num_vertices();
-            step.updates = static_algorithm->take_pending_updates();
-            block.steps.push_back(std::move(step));
-
-            if (block.steps.size() == config.worker_block_size) {
-                blocks.push_back(std::move(block));
-                block = StaticUpdateBlock{};
-                block.first_step = counter + 1;
-                block.checkpoint =
-                    static_algorithm->snapshot_current_graph();
-                block.steps.reserve(config.worker_block_size);
-            }
-        }
-        if (!block.steps.empty())
-            blocks.push_back(std::move(block));
-
-        static_workers = std::make_unique<StaticWorkerPool>(
-            config.workers, *static_algorithm);
-        for (auto &collected_block : blocks)
-            static_workers->submit(std::move(collected_block));
-
-        for (int step = 1; step <= counter; ++step) {
-            auto result = static_workers->take(step);
-            static_algorithm->apply_result(result);
-            write_step(step);
-        }
-    } else {
-        // Original synchronous update path.
-        while (dyGraph.applyNextOperation()) {
-            ++counter;
-            if (config.print_debug)
-                std::cout << "Change " << counter << std::endl;
-            write_step(counter);
-            if (config.timeout_in_s &&
-                config.timeout_in_s < total_stats.sum())
-                break;
-        }
+    while (dyGraph.applyNextOperation()) {
+        ++counter;
+        if (config.print_debug)
+            std::cout << "Change " << counter << std::endl;
+        write_step(counter);
+        if (config.timeout_in_s && config.timeout_in_s < total_stats.sum())
+            break;
     }
     if (config.print_graph_stats) {
         graph_stats.printStats();
@@ -178,7 +113,6 @@ int main(int argc, char *argv[]) {
     out_gen.writeShortStats(counter, memory, total_stats, counting_stats,
                             SubCounts);
 
-    static_workers.reset();
     SubCounts->unsetGraph();
 
     delete SubCounts;

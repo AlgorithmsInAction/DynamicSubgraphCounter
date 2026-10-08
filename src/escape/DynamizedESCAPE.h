@@ -3,11 +3,10 @@
 
 #include "ObserverAlgorithm.h"
 #include "UndirectedFourSubgraphCounts.h"
-#include "static/StaticAlgorithm.h"
+#include "static/StaticSnapshot.h"
 #include <algorithm/staticalgorithmwrapper.h>
 
-class DynamizedESCAPE : public UndirectedFourSubgraphCounts,
-                         public StaticAlgorithm {
+class DynamizedESCAPE : public UndirectedFourSubgraphCounts {
   private:
     std::vector<int> OnVertexAddId;
     std::vector<int> OnVertexRemoveId;
@@ -23,7 +22,7 @@ class DynamizedESCAPE : public UndirectedFourSubgraphCounts,
     SingleKeyMap sFClique;
 
   public:
-    DynamizedESCAPE(Config &config) : defer_updates(config.workers > 1) {}
+    DynamizedESCAPE(Config &) {}
     ~DynamizedESCAPE() override = default;
 
     std::string getName() override { return "DynamizedESCAPE"; }
@@ -68,23 +67,14 @@ class DynamizedESCAPE : public UndirectedFourSubgraphCounts,
 
     void write_debug() override {}
 
-    StaticGraphSnapshot snapshot_current_graph() const override;
-    unsigned int current_num_vertices() const override {
-        return graph->getSize();
-    }
-    std::vector<StaticGraphUpdate> take_pending_updates() override;
-    StaticAlgorithmResult
-    compute_snapshot(const StaticGraphSnapshot &snapshot) const override;
-    void apply_result(const StaticAlgorithmResult &result) override;
-
   private:
     std::chrono::duration<double> timeLastComputation;
     bool removeArc{0};
-    bool defer_updates{false};
-    std::vector<StaticGraphUpdate> pending_updates;
-
     void run();
     StaticGraphSnapshot capture_snapshot() const;
+    StaticAlgorithmResult
+    compute_snapshot(const StaticGraphSnapshot &snapshot) const;
+    void apply_result(const StaticAlgorithmResult &result);
 };
 
 #endif
