@@ -143,27 +143,20 @@ equals(REFERENCE_CODE, ON) {
 
 CONFIG(release, debug|release) {
   message("Target: Release")
-# uncomment the following line if you are also using AlgoraDyn
-  unix:!macx: LIBS += -L$$PWD/../../AlgoraDyn/build/Release/ -lAlgoraDyn
-  unix:!macx: LIBS += -L$$PWD/../../AlgoraCore/build/Release/ -lAlgoraCore
+  unix:!macx: LIBS += -L$$PWD/../deps/AlgoraDyn/build/Release/ -lAlgoraDyn
+  unix:!macx: LIBS += -L$$PWD/../deps/AlgoraCore/build/Release/ -lAlgoraCore
+  unix:!macx: PRE_TARGETDEPS += $$PWD/../deps/AlgoraDyn/build/Release/libAlgoraDyn.a
+  unix:!macx: PRE_TARGETDEPS += $$PWD/../deps/AlgoraCore/build/Release/libAlgoraCore.a
 }
 CONFIG(debug, debug|release) {
   message("Target: Debug")
-# uncomment the following line if you are also using AlgoraDyn
-  unix:!macx: LIBS += -L$$PWD/../../AlgoraDyn/build/Debug/ -lAlgoraDyn
-  unix:!macx: LIBS += -L$$PWD/../../AlgoraCore/build/Debug/ -lAlgoraCore
+  unix:!macx: LIBS += -L$$PWD/../deps/AlgoraDyn/build/Debug/ -lAlgoraDyn
+  unix:!macx: LIBS += -L$$PWD/../deps/AlgoraCore/build/Debug/ -lAlgoraCore
+  unix:!macx: PRE_TARGETDEPS += $$PWD/../deps/AlgoraDyn/build/Debug/libAlgoraDyn.a
+  unix:!macx: PRE_TARGETDEPS += $$PWD/../deps/AlgoraCore/build/Debug/libAlgoraCore.a
 }
 
-INCLUDEPATH += $$PWD/../../AlgoraCore/src
-DEPENDPATH += $$PWD/../../AlgoraCore/src
-
-
-unix:!macx: PRE_TARGETDEPS += $$PWD/../../AlgoraCore/build/Debug/libAlgoraCore.a
-
-# uncomment the following lines if you are also using AlgoraDyn
-INCLUDEPATH += $$PWD/../../AlgoraDyn/src
-DEPENDPATH += $$PWD/../../AlgoraDyn/src
-
-INCLUDEPATH += $$PWD/../../boost_1_77_0
-
-unix:!macx: PRE_TARGETDEPS += $$PWD/../../AlgoraDyn/build/Debug/libAlgoraDyn.a
+INCLUDEPATH += $$PWD/../deps/AlgoraCore/src
+DEPENDPATH += $$PWD/../deps/AlgoraCore/src
+INCLUDEPATH += $$PWD/../deps/AlgoraDyn/src
+DEPENDPATH += $$PWD/../deps/AlgoraDyn/src
