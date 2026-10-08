@@ -43,56 +43,32 @@ To install the required dependencies, run the following commands:
 
 ### Building the Application
 
-Before compiling the application, you need to clone and build the **Algora** libraries:
+The source of both required Algora libraries is included in
+[`deps/algora-source.zip`](deps/algora-source.zip). It was
+packaged from the supplied [AlgoraCore](https://gitlab.com/libalgora/AlgoraCore)
+and [AlgoraDyn](https://gitlab.com/libalgora/AlgoraDyn) source checkouts at
+these revisions:
 
-1. [**Algora|Core**](https://gitlab.com/libalgora/AlgoraCore)
-2. [**Algora|Dyn**](https://gitlab.com/libalgora/AlgoraDyn) (built on top of **Algora|Core**)
+| Library | Version |
+| --- | --- | 
+| AlgoraCore | [`v1.4`](https://gitlab.com/libalgora/AlgoraCore/-/tags/v1.4) |
+| AlgoraDyn | [`v1.2`](https://gitlab.com/libalgora/AlgoraDyn/-/tags/v1.2) |
 
-To ensure a smooth build process, create the following directory structure:
+Both are GPL-3.0 licensed; each source directory includes its `COPYING` and
+`LICENSE` files. The zip also retains Git metadata because the Algora
+build scripts embed revision information. Running `./easyCompile` unpacks the
+source into `deps/AlgoraCore` and `deps/AlgoraDyn`, then compiles both libraries
+only if their Debug or Release archive is missing. The application's qmake
+project uses those paths. No separate Algora checkout or manual build is needed:
 
+```bash
+./easyCompile
 ```
-Algora
-|- AlgoraCore
-|- AlgoraDyn
-subgraph-counting
-```
 
-This can be achieved, e.g., by running these commands:
-```
-$ cd ..
-$ mkdir Algora && cd Algora
-$ git clone https://gitlab.com/libalgora/AlgoraCore
-$ git clone https://gitlab.com/libalgora/AlgoraDyn
-```
-
-Note that you need to compile **Algora|Core** (and **Algora|Dyn**, if
-necessary) both on the `develop` branch before you can build this project!
-See the respective READMEs for further instructions.
-
-Like the other parts of **Algora**, **Algora|App** comes with an
-`easyCompile` script that creates the necessary build directories and
-compiles the app on Linux.
-If you have compiled **Algora|Core** (and **Algora|Dyn**), all you need to do
-now is:
-```
-$ cd Algora/AlgoraCore
-$ git checkout develop
-$ ./easyCompile
-$ cd ../AlgoraDyn
-$ git checkout develop
-$ ./easyCompile
-```
-The compiled binaries can then be found in the `build/Debug` and `build/Release`
-subdirectories.
-
-Alternatively or on other OSes, you can manually run qmake on `src/AlgoraApp.pro`
-or open the file in an IDE like QtCreator.
-
-Once the dependencies are set up, you can proceed with the compilation process in this repository by running:
-
-  ```bash
-  ./easyCompile
-  ```
+The compiled libraries are placed in `deps/AlgoraCore/build/` and
+`deps/AlgoraDyn/build/`. If you prefer to build them manually, extract the zip
+into `deps/`, then run each library's `easyCompile` script there before building
+this application with qmake.
 
 Reference implementations (OB and ESCAPE) are included by default. To build
 without fetching or compiling them, run `./easyCompile --without-reference-code`.

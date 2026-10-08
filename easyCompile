@@ -23,6 +23,7 @@
 ########################################################################
 
 set -e
+ROOT_DIR=$(cd "$(dirname "$0")" && pwd)
 
 export QT_SELECT=qt5
 PRO_FILE="Subgraphen.pro"
@@ -94,20 +95,48 @@ case $1 in
 esac
 done
 
-if [ "$REFERENCE_CODE" = ON ]; then
-    bash "$(dirname "$0")/fetch_reference_sources.sh"
-fi
-
 [ -z "${QMAKE}" ] && QMAKE=$(which qmake 2>/dev/null) && echo "Using \"${QMAKE}\" for \"qmake\"."
 [ -z "${QMAKE}" ] && QMAKE=$(which qmake-qt5 2>/dev/null) && echo "Using \"${QMAKE}\" for \"qmake\"."
 [ -n "${QMAKE}" ] || eval 'echo "Binary \"qmake\" or \"qmake-qt5\" not found. Please specify its location explicitly via --qmake <path/to/qmake>." 1>&2; exit 1'
 [ -x "${QMAKE}" ] || eval 'echo "\"${QMAKE}\" is not an executable. Please specify the location of the qmake binary explicitly via --qmake <path/to/qmake>." 1>&2; exit 1'
 
+ALGORA_ARCHIVE="${ROOT_DIR}/deps/algora-source.zip"
+ALGORA_CORE="${ROOT_DIR}/deps/AlgoraCore"
+ALGORA_DYN="${ROOT_DIR}/deps/AlgoraDyn"
+if [ ! -f "${ALGORA_CORE}/src/AlgoraCore.pro" ] || [ ! -f "${ALGORA_DYN}/src/AlgoraDyn.pro" ]; then
+    [ -f "${ALGORA_ARCHIVE}" ] || { echo "Missing ${ALGORA_ARCHIVE}" >&2; exit 1; }
+    echo "Unpacking Algora sources into deps/..."
+    unzip -n -q "${ALGORA_ARCHIVE}" -d "${ROOT_DIR}/deps"
+fi
+if [ "$(git -C "${ALGORA_CORE}" rev-parse HEAD 2>/dev/null)" != "b8a94f0fb845b4aa8b9d1f09cee8174c804eeaa4" ] ||
+   [ "$(git -C "${ALGORA_DYN}" rev-parse HEAD 2>/dev/null)" != "41d8f4feb86f553ae7a26d616d2cb6b146524f1c" ]; then
+    echo "Algora sources in deps/ do not match bundled Core v1.4 and Dyn v1.2" >&2
+    exit 1
+fi
+
+for library in AlgoraCore AlgoraDyn; do
+    library_dir="${ROOT_DIR}/deps/${library}"
+    if [ ! -f "${library_dir}/build/Debug/lib${library}.a" ] ||
+       [ ! -f "${library_dir}/build/Release/lib${library}.a" ]; then
+        echo "Compiling ${library}..."
+        (cd "${library_dir}" && ./easyCompile --qmake "${QMAKE}")
+        [ -f "${library_dir}/build/Debug/lib${library}.a" ] &&
+        [ -f "${library_dir}/build/Release/lib${library}.a" ] || {
+            echo "${library} did not produce both Debug and Release libraries" >&2
+            exit 1
+        }
+    fi
+done
+
+if [ "$REFERENCE_CODE" = ON ]; then
+    bash "${ROOT_DIR}/fetch_reference_sources.sh"
+fi
+
 QMAKE_ARGS="-r -spec ${SPEC} REFERENCE_CODE=${REFERENCE_CODE} ${EXTRA_ARGS} $@"
 QMAKE_ARGS_DEBUG="CONFIG+=debug"
 
 
-CUR_DIR=$(pwd)
+CUR_DIR="${ROOT_DIR}"
 BUILD_DIR="${CUR_DIR}/build"
 BUILD_DIR_DEBUG="${BUILD_DIR}/Debug"
 BUILD_DIR_RELEASE="${BUILD_DIR}/Release"
@@ -126,11 +155,13 @@ mkdir -p "${BUILD_DIR_RELEASE}"
 
 echo "Compiling debug version..."
 cd "${BUILD_DIR_DEBUG}"
-${QMAKE} ${PRO_PATH} ${QMAKE_ARGS} ${QMAKE_ARGS_DEBUG} && make
+"${QMAKE}" "${PRO_PATH}" ${QMAKE_ARGS} ${QMAKE_ARGS_DEBUG}
+make
 
 
 echo "Compiling release version..."
 cd "${BUILD_DIR_RELEASE}"
-${QMAKE} ${PRO_PATH} ${QMAKE_ARGS} && make
+"${QMAKE}" "${PRO_PATH}" ${QMAKE_ARGS}
+make
 
 cd "${CUR_DIR}"

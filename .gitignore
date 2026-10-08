@@ -1,6 +1,9 @@
 Algora/
 build/
-deps/
+deps/escape/
+deps/oaqc/
+deps/AlgoraCore/
+deps/AlgoraDyn/
 .reference-deps/
 .vscode
 experiments/data
