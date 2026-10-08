@@ -10,13 +10,13 @@ subgraph-counting algorithms, integrated as dynamized baselines:
 
 - **OB (Ortmann–Brandes)** [4]: based on **oaqc**;
   [upstream repository](https://github.com/schochastics/oaqc). `easyCompile`
-  downloads a pinned copy and uses those files directly when compiling the
+  downloads the pinned `v2.0.0` tag and uses those files directly when compiling the
   project’s dynamisation adapter in
   `src/oaqc/`. Select it with `-a ob`.
 - **ESCAPE (Pinar, Seshadhri, and Vishal)** [5]:
   [upstream repository](https://bitbucket.org/seshadhri/escape). `easyCompile`
-  downloads the upstream `master` branch, applies the source-only memory-leak
-  fixes in `src/escape/memory-leaks.patch`, and uses those files when
+  downloads revision `7ec2f93c524a0b47cdc8c639602e90d1c1fceff3`, applies
+  the source-only memory-leak fixes in `src/escape/memory-leaks.patch`, and uses those files when
   compiling the project’s adapter in
   `src/escape/`. Select it with `-a escape`.
 
