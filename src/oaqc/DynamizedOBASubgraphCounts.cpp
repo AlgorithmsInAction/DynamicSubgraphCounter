@@ -1,7 +1,7 @@
 #include "DynamizedOBASubgraphCounts.h"
+#include "QuadCensus.h"
 
 #include <stdexcept>
-#include <utility>
 
 bool DynamizedOBASubgraphCounts::prepare() {
     if (!hasGraph()) {
@@ -9,21 +9,13 @@ bool DynamizedOBASubgraphCounts::prepare() {
         return false;
     }
 
-    graph->onArcRemove(&OnArcAddId.emplace_back(0), [&](Algora::Arc *arc) {
+    graph->onArcRemove(&OnArcAddId.emplace_back(0), [&](Algora::Arc *) {
         removeArc = true;
-        if (defer_updates)
-            pending_updates.push_back(
-                {arc->getTail()->getId(), arc->getHead()->getId(), false});
-        else
-            run();
+        run();
         removeArc = false;
     });
-    graph->onArcAdd(&OnArcRemoveId.emplace_back(0), [&](Algora::Arc *arc) {
-        if (defer_updates)
-            pending_updates.push_back(
-                {arc->getTail()->getId(), arc->getHead()->getId(), true});
-        else
-            run();
+    graph->onArcAdd(&OnArcRemoveId.emplace_back(0), [&](Algora::Arc *) {
+        run();
     });
     return true;
 }
@@ -57,18 +49,6 @@ StaticGraphSnapshot DynamizedOBASubgraphCounts::capture_snapshot() const {
     if (i != edge_count)
         throw std::runtime_error("OB snapshot edge count mismatch");
     return snapshot;
-}
-
-StaticGraphSnapshot
-DynamizedOBASubgraphCounts::snapshot_current_graph() const {
-    return capture_snapshot();
-}
-
-std::vector<StaticGraphUpdate>
-DynamizedOBASubgraphCounts::take_pending_updates() {
-    auto updates = std::move(pending_updates);
-    pending_updates.clear();
-    return updates;
 }
 
 StaticAlgorithmResult DynamizedOBASubgraphCounts::compute_snapshot(

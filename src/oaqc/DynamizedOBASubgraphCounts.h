@@ -4,11 +4,10 @@
 #include "ObserverAlgorithm.h"
 #include "UndirectedFourSubgraphCounts.h"
 #include "h_counts/HStructureCounts.h"
-#include "static/StaticAlgorithm.h"
+#include "static/StaticSnapshot.h"
 #include <algorithm/staticalgorithmwrapper.h>
 
-class DynamizedOBASubgraphCounts : public UndirectedFourSubgraphCounts,
-                                   public StaticAlgorithm {
+class DynamizedOBASubgraphCounts : public UndirectedFourSubgraphCounts {
   private:
     std::vector<int> OnVertexAddId;
     std::vector<int> OnVertexRemoveId;
@@ -24,8 +23,7 @@ class DynamizedOBASubgraphCounts : public UndirectedFourSubgraphCounts,
     SingleKeyMap sFClique;
 
   public:
-    DynamizedOBASubgraphCounts(Config &config)
-        : defer_updates(config.workers > 1) {}
+    DynamizedOBASubgraphCounts(Config &) {}
     ~DynamizedOBASubgraphCounts() override = default;
 
     std::string getName() override { return "HSubgraphCounts"; }
@@ -70,23 +68,14 @@ class DynamizedOBASubgraphCounts : public UndirectedFourSubgraphCounts,
 
     void write_debug() override {}
 
-    StaticGraphSnapshot snapshot_current_graph() const override;
-    unsigned int current_num_vertices() const override {
-        return graph->getSize();
-    }
-    std::vector<StaticGraphUpdate> take_pending_updates() override;
-    StaticAlgorithmResult
-    compute_snapshot(const StaticGraphSnapshot &snapshot) const override;
-    void apply_result(const StaticAlgorithmResult &result) override;
-
   private:
     std::chrono::duration<double> timeLastComputation;
     bool removeArc{0};
-    bool defer_updates{false};
-    std::vector<StaticGraphUpdate> pending_updates;
-
     void run();
     StaticGraphSnapshot capture_snapshot() const;
+    StaticAlgorithmResult
+    compute_snapshot(const StaticGraphSnapshot &snapshot) const;
+    void apply_result(const StaticAlgorithmResult &result);
 };
 
 #endif
