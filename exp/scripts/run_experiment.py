@@ -61,7 +61,7 @@ class Job:
     config: Config
     attempt: int
     data_set: str = "2m"
-    timeout: int = 1
+    timeout: int = 0
     reference: str = ""
 
     @property
@@ -90,7 +90,7 @@ EGST_HD = ("--highAnchorsOnly", "--direct")
 
 def jobs_for(name: str) -> list[Job]:
     jobs: list[Job] = []
-    def add(graphs, patterns, configs, data_set="2m", timeout=1):
+    def add(graphs, patterns, configs, data_set="2m", timeout=0):
         jobs.extend(Job(g, p, c, r, data_set, timeout)
                     for r, p, c, g in itertools.product(range(1, 4), patterns, configs, graphs))
 
@@ -576,8 +576,10 @@ def main() -> int:
                 )
                 detail_files[job.key] = detail
                 command += ["-f", str(detail)]
-            command += ["--ssf", str(result), "--timeout", str(job.timeout),
-                       "--dont_write_counts"]
+            command += ["--ssf", str(result)]
+            if job.timeout:
+                command += ["--timeout", str(job.timeout)]
+            command.append("--dont_write_counts")
         manifest.append({"key": job.key, "graph": job.graph, "pattern": job.pattern,
                          "config": job.config.label, "reference": job.reference or None,
                          "attempt": job.attempt, "input": str(input_file),

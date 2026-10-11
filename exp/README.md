@@ -339,7 +339,8 @@ the dependency revisions in `Dockerfile` to the commits used for the final
 paper release.
 
 Full-set runs can take days and individual jobs have a 24-hour timeout. Static
-baselines use 150K updates. The HHH/EGST and RapidFlow dynamic-baseline commands
-use a five-hour limit; ContinuousSubgraphMatching passes no explicit time-limit,
-matching the supplied paper script. Avoid running unrelated workloads on the
-selected cache groups.
+baselines use 150K updates and have a 24-hour timeout. The HHH/EGST and
+RapidFlow dynamic-baseline commands use a five-hour limit;
+ContinuousSubgraphMatching passes no explicit time-limit, matching the supplied
+paper script. All other experiment jobs have no timeout. Avoid running
+unrelated workloads on the selected cache groups.
