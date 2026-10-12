@@ -1,8 +1,12 @@
-# SubgraphCounter
+# DynamicSubgraphCounter
 
-SubgraphCounter maintains counts of triangles and connected four-vertex
+DynamicSubgraphCounter maintains counts of triangles and connected four-vertex
 subgraphs under edge updates. It provides HHH and EGST dynamic algorithms,
 plus optional adapters for OB and ESCAPE static baselines.
+
+If you use DynamicSubgraphCounter in your research or work, please cite the following paper:
+
+Kathrin Hanauer, Sophia Heck, Monika Henzinger and Leonhard Sidl. "Fully Dynamic Triangle and 4-Vertex Subgraph Counting: From Theory to Practice and Back Again." Proceedings of ALENEX 2027, SIAM, 2027.
 
 Upstream repository: [AlgorithmsInAction/DynamicSubgraphCounter](https://github.com/AlgorithmsInAction/DynamicSubgraphCounter.git).
 
