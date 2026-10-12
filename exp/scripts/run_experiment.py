@@ -656,7 +656,11 @@ def main() -> int:
             detail_files[job.key].unlink(missing_ok=True)
         log_path = logs / f"{job.key}.log"
         with log_path.open("w") as log:
-            proc = subprocess.run(actual, stdout=log, stderr=subprocess.STDOUT)
+            try:
+                proc = subprocess.run(actual, stdout=log, stderr=subprocess.STDOUT)
+            except OSError as exc:
+                log.write(f"Could not launch job: {exc}\n")
+                return item, cpu, node, 1
         if job.reference == "dna":
             # DNA writes its aggregate timing CSV itself, including timeout
             # status. A launch failure must remain retryable, not become done.
@@ -719,21 +723,27 @@ def main() -> int:
                 report_progress(item[0], code, final=done == len(jobs))
     print("[stage 3/4] Collect result files", flush=True)
     collected = out / "results.csv"
-    rows = collect_results([job for job in jobs if not job.reference], runs, collected)
+    rows = collect_results([job for job in jobs if not job.reference and job.key not in failures], runs, collected)
     print(f"Collected {rows} rows from ssf_*.txt -> {collected}", flush=True)
     if any(job.reference for job in jobs):
         csm_results = out / "results_csm.csv"
         rapid_results = out / "results_rapidflow.csv"
         csm_rows = collect_results(
-            [job for job in jobs if job.reference and job.reference not in ("rapidflow", "dna")], runs, csm_results)
+            [job for job in jobs if job.reference and job.reference not in ("rapidflow", "dna")
+             and job.key not in failures], runs, csm_results)
         rapid_rows = collect_results(
-            [job for job in jobs if job.reference == "rapidflow"], runs, rapid_results)
+            [job for job in jobs if job.reference == "rapidflow" and job.key not in failures], runs, rapid_results)
         print(f"Collected references: {csm_rows} CSM rows, {rapid_rows} RapidFlow rows", flush=True)
-        dna_rows = collect_results([job for job in jobs if job.reference == "dna"],
+        dna_rows = collect_results([job for job in jobs if job.reference == "dna" and job.key not in failures],
                                    runs, out / "results_dna.csv")
         print(f"Collected DNA: {dna_rows} rows", flush=True)
     if failures:
-        raise SystemExit(f"{len(failures)} jobs failed; see {logs}")
+        print(f"WARNING: {len(failures)} jobs failed; plotting available results only; see {logs}",
+              file=sys.stderr, flush=True)
+    status = {"experiment": args.experiment, "partial": bool(failures),
+              "failed_jobs": failures, "native_rows": rows, "plot_status": "skipped"}
+    status_file = out / "status.json"
+    status_file.write_text(json.dumps(status, indent=2) + "\n")
     if args.experiment == "sec_5_2_1_hhh_optimizations":
         report = out / f"{args.experiment}.txt"
         report_hhh_optimizations(collected, report, args.toy)
@@ -746,10 +756,17 @@ def main() -> int:
                         "--output", str(args.plots_dir)]
         if args.toy:
             plot_command.append("--toy")
-        subprocess.run(plot_command, check=True)
+        result = subprocess.run(plot_command)
+        status["plot_status"] = "failed" if result.returncode else "ok"
+        if result.returncode:
+            print(f"Plot construction failed (exit {result.returncode}); collected results retained in {out}",
+                  file=sys.stderr, flush=True)
+        status_file.write_text(json.dumps(status, indent=2) + "\n")
+        args.plots_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(status_file, args.plots_dir / f"{args.experiment}.status.json")
     else:
         print("[stage 4/4] Plot construction skipped", flush=True)
-    return 0
+    return 1 if failures or status["plot_status"] == "failed" else 0
 
 
 if __name__ == "__main__":

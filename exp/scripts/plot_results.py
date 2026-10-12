@@ -148,7 +148,11 @@ def plot(experiment: str, results: Path, output: Path, toy: bool = False) -> Non
 
         elif experiment == "fig_5_6_full_set":
             work = stage / "compare"; work.mkdir()
-            frame.to_csv(work / "results_full_all.csv", index=False)
+            full = frame.copy()
+            indexed = full["partition"].eq("hindex")
+            full["epsilon"] = pd.to_numeric(full["epsilon"], errors="coerce").astype(float)
+            full.loc[indexed, "epsilon"] = pd.to_numeric(full.loc[indexed, "gradual_factor"], errors="coerce")
+            full.to_csv(work / "results_full_all.csv", index=False)
             run_original(PLOTTING / "compare/plot_comp_all_graphs.py", work)
             publish(work / "plots/all_comp.pdf", output, f"{experiment}.pdf")
 

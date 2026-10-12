@@ -264,6 +264,7 @@ def main() -> int:
         return 0
 
     total = len(experiments)
+    failures = []
     for number, experiment in enumerate(experiments, 1):
         print(f"\n[{number}/{total}] {experiment}", flush=True)
         command = [str(HERE / "experiments" / f"{experiment}.sh"),
@@ -277,8 +278,17 @@ def main() -> int:
             command.append("--skip-plots")
         if args.toy:
             command.append("--toy")
-        subprocess.run(command, check=True, cwd=ROOT)
-        print(f"[{number}/{total} done] {experiment}", flush=True)
+        result = subprocess.run(command, cwd=ROOT)
+        if result.returncode:
+            failures.append((experiment, result.returncode))
+            print(f"[{number}/{total} failed] {experiment} (exit {result.returncode}); continuing", flush=True)
+        else:
+            print(f"[{number}/{total} done] {experiment}", flush=True)
+    if failures:
+        print("\nFailed experiments:", file=sys.stderr)
+        for experiment, code in failures:
+            print(f"  {experiment}: exit {code}; see {args.results_dir / experiment}", file=sys.stderr)
+        return 1
     if args.dry_run:
         print("\nDry run completed; no data was downloaded and no experiments or plots were run.")
     else:

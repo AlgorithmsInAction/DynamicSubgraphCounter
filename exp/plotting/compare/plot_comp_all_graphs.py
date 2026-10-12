@@ -112,6 +112,11 @@ def print_speedups(df,metric):
 
     # keep only speedup columns
     speedup_df = result[[c for c in result.columns if "/" in c]].reset_index().sort_values(['graph'])
+    # A failed variant may be absent altogether. Missing comparisons remain
+    # NaN rather than aborting plots or inventing measurements.
+    requested = ['e_h2.0/e_h1.0625', 'h_e0.417/h_el0.2', 'e_h1.0625/h_el0.2',
+                 'h_el0.2/h_e0.417', 'h_el0.2/e_h1.0625', 'e_h1.0625/h_e0.417']
+    speedup_df = speedup_df.reindex(columns=list(dict.fromkeys([*speedup_df.columns, *requested])))
 
     print(speedup_df[['graph','e_h2.0/e_h1.0625', 'h_e0.417/h_el0.2','e_h1.0625/h_el0.2']].to_string())
     # print(speedup_df[['graph','e_e0.4/e_h','e_h/h_e0.2','e_e0.4/h_e0.2','e_e0.33/h_e0.2','h_e0.2/e_e0.33']].to_string())

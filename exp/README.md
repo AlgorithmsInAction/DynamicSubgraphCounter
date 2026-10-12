@@ -172,6 +172,13 @@ passed by `run.py`.  The main runner executes subscripts sequentially and prints
 `[x/y done]`.  Within one experiment it schedules jobs over the selected CPUs
 and shows `[runs completed/total; percent]` on one updating terminal line.
 Redirected output is limited to 5% updates, while failures are always printed.
+Failed experiments do not prevent later selected experiments from starting.
+The runner reports all failed experiments at the end and exits nonzero.
+Within an experiment, failed native jobs are excluded from collection and plots
+are attempted from available results. Each experiment writes `status.json` with
+failed job keys and plotting status; a copy beside the plot records whether its
+input is partial. Missing measurements are not replaced with successful values.
+If insufficient data prevents plotting, collected results remain available.
 Successful non-empty `ssf_*.txt` files are resume markers, so interrupted
 invocations continue where they left off. Logs and the exact command manifest
 are retained per experiment.
