@@ -5,6 +5,8 @@ SubgraphCounter dynamically maintains counts of small subgraphs (triangles, 3-pa
 This directory reproduces the experiments in **“Fully Dynamic Triangle and
 4-Vertex Subgraph Counting: From Theory to Practice and Back Again”**.
 
+Licenses and attribution for downloaded algorithms and data: [NOTICE.md](NOTICE.md).
+
 ## Reproduce from a ZIP on a clean machine
 
 Nothing from this project needs to be installed on the host. The host only
