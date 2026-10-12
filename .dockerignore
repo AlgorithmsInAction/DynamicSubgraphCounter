@@ -1,6 +1,7 @@
 .git
 build
-deps
+deps/*
+!deps/algora-source.zip
 .reference-deps
 Engineering_Fully_Dynamic_Subgraph_Counting.pdf
 exp/data

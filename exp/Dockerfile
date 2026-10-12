@@ -22,10 +22,6 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
-RUN git clone --depth 1 https://gitlab.com/libalgora/AlgoraCore.git && \
-    git clone --depth 1 https://gitlab.com/libalgora/AlgoraDyn.git && \
-    cd AlgoraCore && ./easyCompile -g && \
-    cd ../AlgoraDyn && ./easyCompile -g
 
 # Pin the independently maintained Figure 5.5 reference implementations.
 ARG RAPIDFLOW_REF=2ea4f4c35bcee95940a5e6c17a74a2a111afc2c1
@@ -48,6 +44,8 @@ RUN git clone https://github.com/AlgorithmsInAction/subgraphcounting_DNA.git && 
 
 COPY . /workspace/subgraph-counting
 WORKDIR /workspace/subgraph-counting
+# easyCompile unpacks and builds the bundled deps/algora-source.zip; use the
+# same supplied Algora sources as native builds, not moving upstream branches.
 RUN ./easyCompile -g && \
     g++ -O3 -std=c++17 exp/tools/graph_cleaner.cpp -o /usr/local/bin/graph_cleaner && \
     g++ -O3 -std=c++17 exp/tools/unixTo24hLifetime.cpp -o /usr/local/bin/temporal_to_updates

@@ -30,9 +30,10 @@ docker build -f exp/Dockerfile -t subgraph-counting-exp .
 
 `easyCompile` downloads public [oaqc](https://github.com/schochastics/oaqc) and
 [ESCAPE](https://bitbucket.org/seshadhri/escape) sources (for the OB/ESCAPE
-baselines) into the Git-ignored `deps/` directory. Further the docker container downloads [AlgoraCore](https://gitlab.com/libalgora/AlgoraCore),
-[AlgoraDyn](https://gitlab.com/libalgora/AlgoraDyn), RapidFlow,
-ContinuousSubgraphMatching, and DNA, installs the build dependencies, and compiles the
+baselines) into the Git-ignored `deps/` directory. The Docker container builds
+AlgoraCore and AlgoraDyn from the supplied `deps/algora-source.zip`, downloads
+RapidFlow, ContinuousSubgraphMatching, and DNA, installs the build dependencies,
+and compiles the
 main benchmark and all three reference applications plus `graph_cleaner` and
 `temporal_to_updates`. The run script also invokes this build command
 automatically; Docker reuses the cached image when nothing changed.
@@ -333,10 +334,10 @@ and selectable text while substantially reducing image build time.
 
 The paper used Ubuntu 24.04, GCC optimization, three repetitions, one core per
 non-overlapping cache, and medians/geometric means.  The image mirrors that
-software base, builds AlgoraCore and AlgoraDyn from their public default
-branches, and builds this repository in release mode. For archival reproduction, pin
-the dependency revisions in `Dockerfile` to the commits used for the final
-paper release.
+software base, builds the supplied AlgoraCore v1.4 and AlgoraDyn v1.2 sources
+from `deps/algora-source.zip`, and builds this repository in release mode.
+The independently downloaded Figure 5.5 reference implementations are pinned
+to the revisions recorded in `Dockerfile`.
 
 Full-set runs can take days and individual jobs have a 24-hour timeout. Static
 baselines use 150K updates and have a 24-hour timeout. The HHH/EGST and
