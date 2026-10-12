@@ -4,6 +4,8 @@ SubgraphCounter maintains counts of triangles and connected four-vertex
 subgraphs under edge updates. It provides HHH and EGST dynamic algorithms,
 plus optional adapters for OB and ESCAPE static baselines.
 
+Upstream repository: [AlgorithmsInAction/DynamicSubgraphCounter](https://github.com/AlgorithmsInAction/DynamicSubgraphCounter.git).
+
 ## Quick start
 
 Requires a C++17 compiler, qmake 5, Boost headers, Git, and unzip. Install the

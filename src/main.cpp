@@ -23,7 +23,7 @@
 #include "graph/vertex.h"
 #include "io/konectnetworkreader.h"
 #include "io/output_generator.h"
-#include "io/parse_paramters.h"
+#include "io/parse_parameters.h"
 #include "property/fastpropertymap.h"
 #include "util/graph_stats.h"
 #include "util/memory.h"
