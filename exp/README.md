@@ -1,11 +1,16 @@
-# SubgraphCounter: Dynamic, configurable subgraph counting for undirected triangle and 4-vertex patterns
+# DynamicSubgraphCounter: Dynamic, configurable counting of undirected triangle and four-vertex patterns
 
-SubgraphCounter dynamically maintains counts of small subgraphs (triangles, 3-paths, claws, paws, 4-cycles, diamonds, 4-cliques) under edge updates. Multiple dynamic algorithms and vertex-partitioning strategies are provided, with optional tuning parameters for performance/accuracy tradeoffs.
+DynamicSubgraphCounter maintains counts of small subgraphs (triangles, 3-paths,
+claws, paws, 4-cycles, diamonds, and 4-cliques) under edge updates. It provides
+multiple dynamic algorithms and vertex-partitioning strategies, with optional
+parameters for tuning performance.
 
-This directory reproduces the experiments in **“Fully Dynamic Triangle and
+This directory contains the tools for reproducing the experiments in
+**“Fully Dynamic Triangle and
 4-Vertex Subgraph Counting: From Theory to Practice and Back Again”**.
 
-Licenses and attribution for downloaded algorithms and data: [NOTICE.md](NOTICE.md).
+For licenses and attribution for downloaded software and data, see
+[NOTICE.md](NOTICE.md).
 
 ## Reproduce from a ZIP on a clean machine
 
@@ -35,35 +40,36 @@ docker build -f exp/Dockerfile -t subgraph-counting-exp .
 baselines) into the Git-ignored `deps/` directory. The Docker container builds
 AlgoraCore and AlgoraDyn from the supplied `deps/algora-source.zip`, downloads
 RapidFlow, ContinuousSubgraphMatching, and DNA, installs the build dependencies,
-and compiles the
-main benchmark and all three reference applications plus `graph_cleaner` and
-`temporal_to_updates`. The run script also invokes this build command
-automatically; Docker reuses the cached image when nothing changed.
+and compiles the main benchmark and all three reference applications, plus
+`graph_cleaner` and `temporal_to_updates`. The run script also invokes this
+build command automatically; Docker reuses cached build layers when their
+inputs have not changed.
 
 The image fetches Ubuntu indexes by content hash and retries cleanly to tolerate
 mirrors or HTTP caches that are briefly out of sync. If all five attempts fail,
 rerun the same command after the mirror has synchronized; do not bypass APT's
 signature or checksum verification.
 
-Choose either the single-command reproduction (estimated runtime of 11.3 days on a machine with 16 L3-cache disjoint CPUs and 1.48 TB RAM):
+Run all experiments with a single command (estimated runtime: 11.3 days on a
+machine with 16 CPUs that do not share L3 caches and 1.48 TB of RAM):
 
 ```bash
 ./exp/run.sh --all
 ```
 
-or run the suites separately in the recommended order:
+Alternatively, run the suites separately in the recommended order:
 
 ```bash
 # 1. Main engineering-set experiments (Section 5.2.1 and Figures 5.1--5.5)
-# Estimated runtime of 5.6 days on a machine with 16 L3-cache disjoint CPUs and 1.48 TB RAM
+# Estimated runtime: 5.6 days with 16 CPUs that do not share L3 caches and 1.48 TB of RAM
 ./exp/run.sh --engineering_set_main
 
 # 2. Full-set experiment (Figure 5.6)
-# Estimated runtime of 4.5 days on a machine with 16 L3-cache disjoint CPUs and 1.48 TB RAM
+# Estimated runtime: 4.5 days with 16 CPUs that do not share L3 caches and 1.48 TB of RAM
 ./exp/run.sh --full_set
 
 # 3. Optional appendix engineering-set experiments (Figures A.1--A.5)
-# Estimated runtime of 1.2 days on a machine with 16 L3-cache disjoint CPUs and 1.48 TB RAM
+# Estimated runtime: 1.2 days with 16 CPUs that do not share L3 caches and 1.48 TB of RAM
 ./exp/run.sh --engineering_set_appendix
 ```
 
@@ -119,7 +125,7 @@ below; other CPU counts use the idealized CPU-hours divided by worker count.
 ### Target-machine estimates: 16 CPUs and 1.48 TB RAM
 
 This model uses 16 workers on **1.48 TB decimal RAM**, split evenly over two
-NUMA nodes: eight workers and 689.2 GiB per node. The memory column is the
+NUMA nodes, with eight workers and 689.2 GiB per node. The memory column is the
 modeled peak sum of simultaneously active job reservations, not `16 ×` the
 largest job.
 
@@ -167,21 +173,25 @@ from an ideal 92.5 h to 107.9 h.
 | engineering appendix | `fig_a_4_hhh_single_patterns.sh` | single-pattern HHH tuning |
 | engineering appendix | `fig_a_5_egst_single_patterns.sh` | single-pattern EGST tuning |
 
-Every subscript can also be called directly; it accepts the paths and switches
-passed by `run.py`.  The main runner executes subscripts sequentially and prints
-`[x/y done]`.  Within one experiment it schedules jobs over the selected CPUs
-and shows `[runs completed/total; percent]` on one updating terminal line.
-Redirected output is limited to 5% updates, while failures are always printed.
+Each experiment script can also be called directly; it accepts the paths and
+options passed by `run.py`. The main runner executes these scripts sequentially
+and prints `[x/y done]`. Within an experiment, it schedules jobs across the
+selected CPUs and shows `[runs completed/total; percent]` on a single updating
+terminal line. When output is redirected, progress is reported at approximately
+5% intervals; failures are always printed.
 Failed experiments do not prevent later selected experiments from starting.
 The runner reports all failed experiments at the end and exits nonzero.
 Within an experiment, failed native jobs are excluded from collection and plots
 are attempted from available results. Each experiment writes `status.json` with
-failed job keys and plotting status; a copy beside the plot records whether its
-input is partial. Missing measurements are not replaced with successful values.
+failed job keys and plotting status; when plotting is attempted, a copy is saved
+in the plots directory. Its `partial` field indicates runner failures, not
+whether every run processed all updates before its timeout. Missing measurements
+are not replaced with successful values.
 If insufficient data prevents plotting, collected results remain available.
-Successful non-empty `ssf_*.txt` files are resume markers, so interrupted
-invocations continue where they left off. Logs and the exact command manifest
-are retained per experiment.
+A completed job is reused only if both its `.done` marker and a nonempty `ssf_*.txt`
+result file are present (and any required per-update detail file is nonempty).
+Interrupted invocations therefore reuse completed jobs. Logs and a command
+manifest are retained for each experiment.
 
 Every selected experiment follows the same four stages:
 
@@ -223,9 +233,9 @@ reference memory is not measured. Nonzero exits and upstream timeouts are
 recorded as completed outcomes for CSM/RapidFlow instead of aborting the grid.
 DNA timeouts produce completed partial observations; DNA launch failures remain
 retryable. DNA's own aggregate CSV is preserved per run and collected into
-`results_dna.csv`. Plots use these newly measured DNA timings, never the old
-bundled baseline CSV. Existing completed native/CSM/RapidFlow jobs are reused
-when resuming Figure 5.5; only missing DNA jobs need to run.
+`results_dna.csv`. Plots use these newly measured DNA timings. When Figure 5.5
+is resumed, jobs with valid resume markers are reused; the remaining jobs are
+rerun. Use `--force` to repeat all jobs, including recorded reference failures.
 
 ## Data download and preparation
 
@@ -244,7 +254,7 @@ to `data/raw/*.part` and are atomically renamed when complete.  Preparation:
 2. gives timestamped edges the paper's 14-day lifetime;
 3. canonicalizes undirected endpoints and removes self-loops, duplicate
    insertions, and deletions of absent edges;
-4. derives the first-2,000,000 and first-150,000 update streams;
+4. derives streams containing the first 2,000,000 and first 150,000 updates;
 5. creates the vertex/update representation needed by CSM baselines.
 
 The resulting layout is:
@@ -304,6 +314,7 @@ without `--force` to collect those completed runs without repeating them.
 ```text
 exp/results/<experiment>/
   manifest.json      exact commands and inputs
+  status.json        runner failures and plotting status
   runs/ssf_*.txt     one short-stat result per run
   runs/*.done        successful-run resume markers
   results.csv        collected results with exactly one CSV header
@@ -326,6 +337,7 @@ exp/plots/
   fig_a_3_egst_optimizations.pdf
   fig_a_4_hhh_single_patterns_<pattern>.pdf
   fig_a_5_egst_single_patterns_<pattern>.pdf
+  <experiment>.status.json  status copied after a plotting attempt
 ```
 
 All final plots are collected in `exp/plots/`. Raw measurements are never
@@ -342,7 +354,7 @@ and selectable text while substantially reducing image build time.
 ## Reproducibility notes
 
 The paper used Ubuntu 24.04, GCC optimization, three repetitions, one core per
-non-overlapping cache, and medians/geometric means.  The image mirrors that
+L3 cache group, and medians/geometric means. The image mirrors that
 software base, builds the supplied AlgoraCore v1.4 and AlgoraDyn v1.2 sources
 from `deps/algora-source.zip`, and builds this repository in release mode.
 The independently downloaded Figure 5.5 reference implementations are pinned
@@ -351,6 +363,6 @@ to the revisions recorded in `Dockerfile`.
 Full-set runs can take days and individual jobs have a 24-hour timeout. Static
 baselines use 150K updates and have a 24-hour timeout. The HHH/EGST and
 RapidFlow dynamic-baseline commands use a five-hour limit;
-ContinuousSubgraphMatching passes no explicit time-limit, matching the supplied
-paper script. All other experiment jobs have no timeout. Avoid running
+ContinuousSubgraphMatching is invoked without an explicit time limit, matching
+the supplied paper script. All other experiment jobs have no timeout. Avoid running
 unrelated workloads on the selected cache groups.

@@ -1,19 +1,20 @@
 # DynamicSubgraphCounter
 
 DynamicSubgraphCounter maintains counts of triangles and connected four-vertex
-subgraphs under edge updates. It provides HHH and EGST dynamic algorithms,
-plus optional adapters for OB and ESCAPE static baselines.
+subgraphs under edge updates. It provides original and engineered versions of
+the HHH [1] and EGST [2, 3] dynamic algorithms, plus optional adapters for the
+OB [4] and ESCAPE [5] static baselines.
 
 If you use DynamicSubgraphCounter in your research or work, please cite the following paper:
 
-Kathrin Hanauer, Sophia Heck, Monika Henzinger and Leonhard Sidl. "Fully Dynamic Triangle and 4-Vertex Subgraph Counting: From Theory to Practice and Back Again." Proceedings of ALENEX 2027, SIAM, 2027.
+Kathrin Hanauer, Sophia Heck, Monika Henzinger, and Leonhard Sidl. "Fully Dynamic Triangle and 4-Vertex Subgraph Counting: From Theory to Practice and Back Again." Proceedings of ALENEX 2027, SIAM, 2027.
 
 Upstream repository: [AlgorithmsInAction/DynamicSubgraphCounter](https://github.com/AlgorithmsInAction/DynamicSubgraphCounter.git).
 
 ## Quick start
 
-Requires a C++17 compiler, qmake 5, Boost headers, Git, and unzip. Install the
-build dependencies, for example:
+Building requires a C++17 compiler, qmake 5, Boost headers, Git, and unzip.
+Install the build dependencies, for example:
 
 **Debian/Ubuntu**
 
@@ -42,11 +43,11 @@ and `-a escape` are then unavailable. For direct qmake builds, use
 ## Source dependencies
 
 [`deps/algora-source.zip`](deps/algora-source.zip) contains the supplied Algora
-sources and their GPL-3.0 licenses, without Git metadata or `.gitattributes`.
+sources and their GPL-3.0 licenses.
 `easyCompile` unpacks and builds the provided sources in `deps/` if their Debug
 or Release libraries are missing.
 The bundled version-header generators support builds without Git history:
-they retain an existing header or use the supplied template's unknown metadata,
+they retain an existing header or use the supplied template's placeholder metadata,
 instead of querying Git. This archive-only build adjustment applies to both libraries.
 
 | Bundled library | Version |
@@ -85,24 +86,26 @@ vertices; `--extraAux` enables additional structures; `--no_aux_for_t`
 disables triangle auxiliary structures. EGST supports `--direct`. Run
 `./build/Release/SubgraphCounter --help` for all options.
 
-For experiment reproduction, see the [experiment guide](exp/README.md).
+For instructions on reproducing the experiments in our paper, see the
+[experiment guide](exp/README.md).
 
 ## References
 
-[1] K. Hanauer, M. Henzinger, and Q. C. Hua, “Fully Dynamic Four-Vertex Subgraph Counting,” in 1st Symposium on Algorithmic Foundations of Dynamic Networks, SAND 2022, March 28-30, 2022, Virtual Conference, J. Aspnes and O. Michail, Eds., in LIPIcs, vol. 221. Schloss Dagstuhl - Leibniz-Zentrum für Informatik, 2022, p. 18:1-18:17. doi: 10.4230/LIPICS.SAND.2022.18.
+[1] K. Hanauer, M. Henzinger, and Q. C. Hua. “Fully Dynamic Four-Vertex Subgraph Counting”. 1st Symposium on Algorithmic Foundations of Dynamic Networks, SAND 2022, March 28-30, 2022, Virtual Conference, J. Aspnes and O. Michail, Eds., in LIPIcs, vol. 221. Schloss Dagstuhl - Leibniz-Zentrum für Informatik, 2022, p. 18:1-18:17. doi: 10.4230/LIPICS.SAND.2022.18.
 
-[2] D. Eppstein, M. T. Goodrich, D. Strash, and L. Trott, “Extended dynamic subgraph statistics using h-index parameterized data structures,” Theor. Comput. Sci., vol. 447, pp. 44–52, 2012, doi: 10.1016/J.TCS.2011.11.034.
+[2] D. Eppstein, M. T. Goodrich, D. Strash, and L. Trott. “Extended dynamic subgraph statistics using h-index parameterized data structures”. Theor. Comput. Sci., vol. 447, pp. 44–52, 2012, doi: 10.1016/J.TCS.2011.11.034.
 
-[3] D. Eppstein and E. S. Spiro, “The h-Index of a Graph and its Application to Dynamic Subgraph Statistics,” J. Graph Algorithms Appl., vol. 16, no. 2, pp. 543–567, 2012, doi: 10.7155/JGAA.00273.
+[3] D. Eppstein and E. S. Spiro. “The h-Index of a Graph and its Application to Dynamic Subgraph Statistics”. J. Graph Algorithms Appl., vol. 16, no. 2, pp. 543–567, 2012, doi: 10.7155/JGAA.00273.
 
-[4] M. Ortmann and U. Brandes, “Efficient orbit-aware triad and quad census in directed and undirected graphs,” Appl. Netw. Sci., vol. 2, p. 13, 2017, doi: 10.1007/S41109-017-0027-2.
+[4] M. Ortmann and U. Brandes. “Efficient orbit-aware triad and quad census in directed and undirected graphs”. Appl. Netw. Sci., vol. 2, p. 13, 2017, doi: 10.1007/S41109-017-0027-2.
 
-[5] A. Pinar, C. Seshadhri, and V. Vishal, “ESCAPE: Efficiently Counting All 5-Vertex Subgraphs,” in Proceedings of the 26th International Conference on World Wide Web, WWW 2017, Perth, Australia, April 3-7, 2017, R. Barrett, R. Cummings, E. Agichtein, and E. Gabrilovich, Eds., ACM, 2017, pp. 1431–1440. doi: 10.1145/3038912.3052597.
+[5] A. Pinar, C. Seshadhri, and V. Vishal. “ESCAPE: Efficiently Counting All 5-Vertex Subgraphs”. Proceedings of the 26th International Conference on World Wide Web, WWW 2017, Perth, Australia, April 3-7, 2017, R. Barrett, R. Cummings, E. Agichtein, and E. Gabrilovich, Eds., ACM, 2017, pp. 1431–1440. doi: 10.1145/3038912.3052597.
 
 
 ## License
 
-See the [GNU GPLv3 license](LICENSE) and [third-party notices](NOTICE.md).
+DynamicSubgraphCounter is licensed under the [GNU GPLv3 license](LICENSE).
+See also the [third-party notices](NOTICE.md).
 
 ## Contributors
 
