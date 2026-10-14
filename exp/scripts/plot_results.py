@@ -41,12 +41,17 @@ def publish(source: Path, output: Path, name: str | None = None) -> None:
     print(f"Wrote {target}")
 
 
+def numeric_column(frame: pd.DataFrame, name: str, default: float = float("nan")) -> pd.Series:
+    """Return an index-aligned numeric series even for older CSV schemas."""
+    return pd.to_numeric(frame.get(name, pd.Series(default, index=frame.index)), errors="coerce")
+
+
 def write_partition_inputs(frame: pd.DataFrame, stage: Path) -> None:
     (stage / "epstab").mkdir(parents=True)
     (stage / "hindex").mkdir(parents=True)
     algo = frame["algo"].astype(str)
     partition = frame["partition"].astype(str)
-    mode = pd.to_numeric(frame.get("recompute_mode", 0), errors="coerce").fillna(0)
+    mode = numeric_column(frame, "recompute_mode", 0).fillna(0)
     selections = {
         stage / "epstab/results_hhh_eps.csv": algo.isin(("hhh", "v_hhh")) & partition.eq("epstab") & mode.ne(3),
         stage / "epstab/results_eps_late.csv": algo.isin(("hhh", "v_hhh")) & partition.eq("epstab") & mode.eq(3),
@@ -100,11 +105,11 @@ def plot(experiment: str, results: Path, output: Path, toy: bool = False) -> Non
         elif experiment == "fig_5_4_static_baselines":
             work = stage / "compare"; work.mkdir()
             static = frame.copy()
-            epsilon = pd.to_numeric(static.get("epsilon", -1), errors="coerce")
-            gradual = pd.to_numeric(static.get("gradual_factor", -1), errors="coerce")
-            mode = pd.to_numeric(static.get("recompute_mode", 0), errors="coerce").fillna(0)
-            direct = pd.to_numeric(static.get("directVertexChange", 0), errors="coerce").fillna(0)
-            high = pd.to_numeric(static.get("s3HighAnchors", 0), errors="coerce").fillna(0)
+            epsilon = numeric_column(static, "epsilon", -1)
+            gradual = numeric_column(static, "gradual_factor", -1)
+            mode = numeric_column(static, "recompute_mode", 0).fillna(0)
+            direct = numeric_column(static, "directVertexChange", 0).fillna(0)
+            high = numeric_column(static, "s3HighAnchors", 0).fillna(0)
             static.loc[static["algo"].eq("ob"), ["algo", "partition"]] = "oba", "none"
             static.loc[static["algo"].eq("escape"), "partition"] = "none"
             static.loc[static["algo"].eq("v_hhh") & epsilon.round(3).eq(.417), "partition"] = "epstab_0417"
@@ -127,9 +132,9 @@ def plot(experiment: str, results: Path, output: Path, toy: bool = False) -> Non
             subgraph = ours.filter(regex=r"^subgraph_.*$")
             ours["aux_time"] = structure.apply(pd.to_numeric, errors="coerce").sum(axis=1)
             ours["count_time"] = subgraph.apply(pd.to_numeric, errors="coerce").sum(axis=1)
-            mode = pd.to_numeric(ours.get("recompute_mode", 0), errors="coerce").fillna(0)
-            epsilon = pd.to_numeric(ours.get("epsilon", -1), errors="coerce")
-            gradual = pd.to_numeric(ours.get("gradual_factor", -1), errors="coerce")
+            mode = numeric_column(ours, "recompute_mode", 0).fillna(0)
+            epsilon = numeric_column(ours, "epsilon", -1)
+            gradual = numeric_column(ours, "gradual_factor", -1)
             late = ours["partition"].eq("epstab") & mode.eq(3)
             ours.loc[late, "partition"] = "epstab_late_" + epsilon[late].map(lambda value: f"{value:g}")
             indexed = ours["partition"].eq("hindex")
@@ -150,8 +155,8 @@ def plot(experiment: str, results: Path, output: Path, toy: bool = False) -> Non
             work = stage / "compare"; work.mkdir()
             full = frame.copy()
             indexed = full["partition"].eq("hindex")
-            full["epsilon"] = pd.to_numeric(full["epsilon"], errors="coerce").astype(float)
-            full.loc[indexed, "epsilon"] = pd.to_numeric(full.loc[indexed, "gradual_factor"], errors="coerce")
+            full["epsilon"] = numeric_column(full, "epsilon").astype(float)
+            full.loc[indexed, "epsilon"] = numeric_column(full, "gradual_factor")[indexed]
             full.to_csv(work / "results_full_all.csv", index=False)
             run_original(PLOTTING / "compare/plot_comp_all_graphs.py", work)
             publish(work / "plots/all_comp.pdf", output, f"{experiment}.pdf")
