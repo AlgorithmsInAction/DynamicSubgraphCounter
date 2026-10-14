@@ -308,13 +308,15 @@ def plot_big_overview():
     top_lim=0.1
     inset_peak = 0.0
     inset_steps = 0
+    historical_without_traces = Path("historical_references_without_inset_traces").exists()
 
     for variant, (algo, part) in VARIANTS_SMALL.items():
         try:
             df_step, _ = load_median_over_x(graph, algo, part)
         except FileNotFoundError:
-            print(f"WARNING: Missing per-update data for static inset: {graph} {algo} {part}; skipping")
-            continue
+            if historical_without_traces and algo in ("oba", "escape"):
+                continue
+            raise SystemExit(f"Missing per-update data for static inset: {graph} {algo} {part}")
 
         inset_peak = max(inset_peak, float(df_step["time"].max()))
         inset_steps = max(inset_steps, int(df_step["step"].max()))
@@ -364,9 +366,9 @@ def plot_big_overview():
         #         legend_handles_small.setdefault("Many S3 Ops", sc2)
 
     small_ax.set_title(graph_info[graph][0]+"-"+graph_info[graph][1])
-    if not inset_steps:
-        small_ax.text(0.5, 0.5, "No per-update data available", ha="center", va="center",
-                      transform=small_ax.transAxes)
+    if historical_without_traces:
+        small_ax.text(0.02, 0.98, "OB/ESCAPE per-update traces unavailable",
+                      transform=small_ax.transAxes, va="top", fontsize=8)
     small_ax.set_xlabel("Update Step")
     small_ax.set_ylabel("Time (s)")
     # small_ax.set_yscale("log")
@@ -436,9 +438,6 @@ def print_speedups(df):
 
         results = []
         for a, b in pairs:
-            if a not in s.index or b not in s.index:
-                print(f"WARNING: Missing variant for {a}/{b}; skipping comparison")
-                continue
             results.append({
                 "pair": f"{a}/{b}",
                 "ratio": s[a] / s[b]

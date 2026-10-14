@@ -6,6 +6,7 @@ import argparse
 import os
 import subprocess
 import sys
+import tarfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -75,6 +76,18 @@ ESTIMATED_WALL_HOURS_16_1_48TB = {
     "fig_a_5_egst_single_patterns": 9.048,
 }
 
+# Approximate native-only portions of Figures 5.4/5.5 after subtracting the
+# bundled historical reference runtimes from the full-grid estimates. The
+# reference CSVs have some missing/timeout rows, so round conservatively.
+NO_REFERENCE_CPU_HOURS = {
+    "fig_5_4_static_baselines": 3.0,
+    "fig_5_5_dynamic_baselines": 15.0,
+}
+NO_REFERENCE_WALL_HOURS_16 = {
+    "fig_5_4_static_baselines": 0.3,
+    "fig_5_5_dynamic_baselines": 1.2,
+}
+
 
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -93,6 +106,11 @@ def parser() -> argparse.ArgumentParser:
                    help="run main-suite experiments on the first 2,000 updates")
     p.add_argument("--skip-data", action="store_true", help="do not invoke data setup")
     p.add_argument("--skip-plots", action="store_true", help="retain CSV results without plotting")
+    modes = p.add_mutually_exclusive_group()
+    modes.add_argument("--no-references", action="store_true",
+                       help="run only HHH/EGST jobs and plot with historical reference results")
+    modes.add_argument("--only-hhh", action="store_true",
+                       help="rerun all HHH/v_hhh jobs; use historical EGST and reference results")
     p.add_argument("--force", action="store_true", help="rerun completed jobs")
     p.add_argument("--dry-run", action="store_true", help="validate and print work without executing jobs")
     p.add_argument("--list", action="store_true", help="list suites, experiments, and detected CPUs")
@@ -162,8 +180,12 @@ def duration(hours: float) -> str:
     return f"{hours * 60:.0f} min"
 
 
-def print_estimate(experiments: list[str], cpu_count: int) -> None:
+def print_estimate(experiments: list[str], cpu_count: int,
+                   no_references: bool = False, only_hhh: bool = False) -> None:
     memory_model = cpu_count == 16
+    if only_hhh:
+        print("No calibrated HHH-only runtime estimate is available; the following "
+              "full-grid estimate is not the expected HHH-only runtime.")
     if memory_model:
         print("Estimated runtime based on previous results (16 workers, 1.48 TB RAM, "
               "2 NUMA nodes, 8 workers/node):")
@@ -172,9 +194,12 @@ def print_estimate(experiments: list[str], cpu_count: int) -> None:
     total = 0.0
     total_wall = 0.0
     for experiment in experiments:
-        cpu_hours = ESTIMATED_CPU_HOURS[experiment]
+        cpu_hours = (NO_REFERENCE_CPU_HOURS.get(experiment, ESTIMATED_CPU_HOURS[experiment])
+                     if no_references else ESTIMATED_CPU_HOURS[experiment])
         total += cpu_hours
-        wall = (ESTIMATED_WALL_HOURS_16_1_48TB[experiment] if memory_model
+        wall = ((NO_REFERENCE_WALL_HOURS_16.get(experiment,
+                  ESTIMATED_WALL_HOURS_16_1_48TB[experiment]) if no_references else
+                 ESTIMATED_WALL_HOURS_16_1_48TB[experiment]) if memory_model
                 else cpu_hours / cpu_count)
         total_wall += wall
         print(f"  {experiment:<36} {cpu_hours:>8.1f} CPU-h  ~ {duration(wall):>9}")
@@ -183,7 +208,8 @@ def print_estimate(experiments: list[str], cpu_count: int) -> None:
           "preprocessing, plotting, and other unmodeled I/O/system effects.")
 
 
-def check_resources(experiments: list[str]) -> None:
+def check_resources(experiments: list[str], no_references: bool = False,
+                    only_hhh: bool = False) -> None:
     """Validate only immutable inputs needed by the selected experiments."""
     from scripts.run_experiment import EXP_ROOT, jobs_for, memory_requirements_kib
 
@@ -193,8 +219,27 @@ def check_resources(experiments: list[str]) -> None:
         plot_program = HERE / "plotting" / PLOT_PROGRAMS[experiment]
         if not plot_program.is_file():
             missing_plot_files.append(str(plot_program))
-        jobs = jobs_for(experiment)
+        jobs = jobs_for(experiment, no_references=no_references, only_hhh=only_hhh)
         memory_requirements_kib(experiment, jobs)
+        if only_hhh:
+            from scripts.historical_results import ROOT as historical_root, historical_rows
+            all_jobs = jobs_for(experiment)
+            historical_rows(experiment, [job for job in all_jobs if job not in jobs])
+            if experiment == "fig_5_4_static_baselines":
+                archive = historical_root / "reference_details.tar.gz"
+                if not archive.is_file():
+                    raise SystemExit(f"missing historical Figure 5.4 inset traces: {archive}")
+                with tarfile.open(archive, "r:gz") as stream:
+                    details = [member for member in stream.getmembers() if member.isfile()]
+                if len(details) != 12:
+                    raise SystemExit("historical Figure 5.4 non-HHH inset traces are incomplete")
+            if experiment == "fig_5_5_dynamic_baselines":
+                required = ("csm_results_baseline.csv", "csm_results_baseline_rapid.csv",
+                            "csm_results_baseline_dna.csv")
+                missing = [str(historical_root / name) for name in required
+                           if not (historical_root / name).is_file()]
+                if missing:
+                    raise SystemExit("missing historical references: " + ", ".join(missing))
         missing_queries = sorted({
             str(EXP_ROOT / "resources/csm/pattern" / f"{job.pattern}.q")
             for job in jobs
@@ -210,6 +255,23 @@ def check_resources(experiments: list[str]) -> None:
     print(f"Resources ready for {len(experiments)} experiment(s).")
 
 
+def check_historical_results(experiments: list[str]) -> None:
+    directory = HERE / "resources/historical"
+    required = {
+        "fig_5_4_static_baselines": ("results_150k.csv",),
+        "fig_5_5_dynamic_baselines":
+            ("results_baseline.csv", "results_baseline_rapid.csv", "results_baseline_dna.csv"),
+    }
+    selected = [name for name in experiments if name in required]
+    if not selected:
+        return
+    missing = [str(directory / name)
+               for experiment in selected for name in required[experiment]
+               if not (directory / name).is_file()]
+    if missing:
+        raise SystemExit("missing historical reference results: " + ", ".join(missing))
+
+
 def main() -> int:
     args = parser().parse_args()
     cpus = validate_cpus(args.cpus or detect_cpus())
@@ -218,6 +280,8 @@ def main() -> int:
         raise SystemExit(
             "--toy is available with --engineering_set_main or with a main-suite --experiment"
         )
+    if args.toy and args.only_hhh:
+        raise SystemExit("--only-hhh requires the full-size historical result grids")
     args.data_dir = args.data_dir or HERE / "data"
     args.results_dir = args.results_dir or HERE / "results" / ("toy" if args.toy else "")
     args.plots_dir = args.plots_dir or HERE / "plots" / ("toy" if args.toy else "")
@@ -232,12 +296,18 @@ def main() -> int:
         if args.toy:
             print("Toy runtime is not estimated from the full-size paper measurements.")
         else:
-            print_estimate(experiments, len(cpus.split(",")))
+            print_estimate(experiments, len(cpus.split(",")), args.no_references,
+                           args.only_hhh)
         return 0
     if args.check_resources:
         if not args.data_only:
-            check_resources(experiments)
+            check_resources(experiments, args.no_references, args.only_hhh)
+            if args.no_references and not args.skip_plots:
+                check_historical_results(experiments)
         return 0
+
+    if args.no_references and not args.skip_plots and not args.dry_run:
+        check_historical_results(experiments)
 
     args.data_dir.mkdir(parents=True, exist_ok=True)
     args.results_dir.mkdir(parents=True, exist_ok=True)
@@ -246,7 +316,8 @@ def main() -> int:
     if args.toy:
         print("Toy mode: first 2,000 updates; runtime is not estimated from full-size results.")
     else:
-        print_estimate(experiments, len(cpus.split(",")))
+        print_estimate(experiments, len(cpus.split(",")), args.no_references,
+                       args.only_hhh)
 
     if not args.skip_data:
         print("\n[stage 1/4] Get and prepare missing data", flush=True)
@@ -255,6 +326,10 @@ def main() -> int:
             command += ["--suite", suite]
         if args.toy:
             command.append("--toy")
+        if args.no_references:
+            command.append("--no-references")
+        if args.only_hhh:
+            command.append("--no-references")
         if args.dry_run:
             command.append("--dry-run")
         subprocess.run(command, check=True, cwd=ROOT)
@@ -278,16 +353,22 @@ def main() -> int:
             command.append("--skip-plots")
         if args.toy:
             command.append("--toy")
+        if args.no_references:
+            command.append("--no-references")
+        if args.only_hhh:
+            command.append("--only-hhh")
         result = subprocess.run(command, cwd=ROOT)
         if result.returncode:
             failures.append((experiment, result.returncode))
-            print(f"[{number}/{total} failed] {experiment} (exit {result.returncode}); continuing", flush=True)
+            print(f"[{number}/{total} failed] {experiment} (exit {result.returncode}); continuing",
+                  flush=True)
         else:
             print(f"[{number}/{total} done] {experiment}", flush=True)
     if failures:
         print("\nFailed experiments:", file=sys.stderr)
         for experiment, code in failures:
-            print(f"  {experiment}: exit {code}; see {args.results_dir / experiment}", file=sys.stderr)
+            print(f"  {experiment}: exit {code}; see {args.results_dir / experiment}",
+                  file=sys.stderr)
         return 1
     if args.dry_run:
         print("\nDry run completed; no data was downloaded and no experiments or plots were run.")

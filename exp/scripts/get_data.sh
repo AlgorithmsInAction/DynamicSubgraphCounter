@@ -5,6 +5,7 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 DATA_DIR="$ROOT/exp/data"
 DRY_RUN=0
 TOY=0
+NO_REFERENCES=0
 SUITES=()
 
 while (($#)); do
@@ -13,6 +14,7 @@ while (($#)); do
         --suite) SUITES+=("$2"); shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         --toy) TOY=1; shift ;;
+        --no-references) NO_REFERENCES=1; shift ;;
         *) echo "get_data.sh: unknown option: $1" >&2; exit 2 ;;
     esac
 done
@@ -51,6 +53,7 @@ for suite in "${SUITES[@]}"; do
     [[ $suite == engineering_set_main || $suite == engineering_set_appendix ]] && want_engineering=1
     [[ $suite == engineering_set_main ]] && { want_150k=1; want_csm=1; }
 done
+if ((NO_REFERENCES)); then want_csm=0; fi
 if ((TOY)); then
     [[ ${#SUITES[@]} == 1 && ${SUITES[0]} == engineering_set_main ]] || {
         echo "--toy requires --suite engineering_set_main" >&2

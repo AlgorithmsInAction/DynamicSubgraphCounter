@@ -12,6 +12,7 @@ import subprocess
 import sys
 import re
 import statistics
+import tarfile
 from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from pathlib import Path
@@ -88,7 +89,8 @@ HHH_HA = ("--highAnchorsOnly", "--extraAux")
 EGST_HD = ("--highAnchorsOnly", "--direct")
 
 
-def jobs_for(name: str) -> list[Job]:
+def jobs_for(name: str, no_references: bool = False,
+             only_hhh: bool = False) -> list[Job]:
     jobs: list[Job] = []
     def add(graphs, patterns, configs, data_set="2m", timeout=0):
         jobs.extend(Job(g, p, c, r, data_set, timeout)
@@ -189,6 +191,12 @@ def jobs_for(name: str) -> list[Job]:
             add(ES, [pattern], configs)
     else:
         raise ValueError(f"unknown experiment {name}")
+    if only_hhh:
+        jobs = [job for job in jobs if not job.reference and
+                job.config.args[:2] == ("-a", "hhh")]
+    elif no_references:
+        jobs = [job for job in jobs if not job.reference and job.config.args[:2] in
+                (("-a", "hhh"), ("-a", "egst"))]
     return jobs
 
 
@@ -480,7 +488,13 @@ def main() -> int:
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--skip-plots", action="store_true")
     p.add_argument("--toy", action="store_true")
+    p.add_argument("--no-references", action="store_true")
+    p.add_argument("--only-hhh", action="store_true")
     args = p.parse_args()
+    if args.only_hhh and args.no_references:
+        p.error("--only-hhh and --no-references are mutually exclusive")
+    if args.only_hhh and args.toy:
+        p.error("--only-hhh requires the full-size historical result grids")
     if args.toy and args.experiment not in TOY_EXPERIMENTS:
         raise SystemExit("--toy is supported only by engineering-set main experiments")
     cpus = parse_cpu_set(args.cpus)
@@ -488,7 +502,13 @@ def main() -> int:
         cpu_nodes = {cpu: numa_node_for_cpu(cpu) for cpu in cpus}
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
-    jobs = jobs_for(args.experiment)
+    all_jobs = jobs_for(args.experiment)
+    jobs = jobs_for(args.experiment, no_references=args.no_references,
+                    only_hhh=args.only_hhh)
+    historical = []
+    if args.only_hhh:
+        from historical_results import historical_rows
+        historical = historical_rows(args.experiment, [job for job in all_jobs if job not in jobs])
     print(f"[stage 2/4] Run {args.experiment}: {len(jobs)} runs", flush=True)
     out = args.results_dir / args.experiment
     runs = out / "runs"
@@ -497,6 +517,11 @@ def main() -> int:
     runs.mkdir(parents=True, exist_ok=True)
     logs.mkdir(parents=True, exist_ok=True)
     details.mkdir(parents=True, exist_ok=True)
+    # The first --only-hhh invocation must replace existing HHH measurements.
+    # Once started, valid per-job checkpoints may be resumed after a restart.
+    hhh_checkpoint = out / ".only_hhh_started"
+    first_hhh_run = (args.only_hhh and not hhh_checkpoint.is_file()
+                     and not (out / "results_hhh_fresh.csv").is_file())
     binary = Path(os.environ.get("SUBGRAPH_BINARY", Path(__file__).resolve().parents[2] / "build/Release/SubgraphCounter"))
     rapidflow_binary = Path(os.environ.get("RAPIDFLOW_BINARY", "/workspace/RapidFlow/build/streaming/RapidFlow.out"))
     csm_binary = Path(os.environ.get("CSM_BINARY", "/workspace/ContinuousSubgraphMatching/build/csm"))
@@ -590,7 +615,7 @@ def main() -> int:
         # Old toy markers were empty and referred to 1K streams. Only markers
         # explicitly recording the current input may resume a 2K toy job.
         stale_toy = args.toy and (not marker.is_file() or marker.read_text().strip() != str(input_file))
-        if args.force or stale_toy or not marker.is_file() or not result.is_file() or result.stat().st_size == 0 or missing_detail:
+        if args.force or first_hhh_run or stale_toy or not marker.is_file() or not result.is_file() or result.stat().st_size == 0 or missing_detail:
             pending.append((job, result, marker, input_files, command))
     requirements = ({job.key: TOY_RESERVATION_KIB for job in jobs if not job.reference} if args.toy else
                     memory_requirements_kib(args.experiment, jobs))
@@ -623,6 +648,13 @@ def main() -> int:
     missing = sorted({str(path) for item in pending for path in item[3] if not path.is_file()})
     if missing:
         raise SystemExit("Missing prepared inputs (run without --skip-data):\n  " + "\n  ".join(missing[:20]))
+
+    if first_hhh_run:
+        # Old markers for jobs not yet launched must not survive a restart.
+        for _, _, marker, _, _ in pending:
+            marker.unlink(missing_ok=True)
+    if args.only_hhh and not hhh_checkpoint.is_file():
+        hhh_checkpoint.touch()
 
     done = completed
     failures = []
@@ -722,8 +754,33 @@ def main() -> int:
                     failures.append(item[0].key)
                 report_progress(item[0], code, final=done == len(jobs))
     print("[stage 3/4] Collect result files", flush=True)
+    if args.only_hhh and failures:
+        raise SystemExit(f"{len(failures)} HHH jobs failed; existing combined results were not replaced; see {logs}")
     collected = out / "results.csv"
-    rows = collect_results([job for job in jobs if not job.reference and job.key not in failures], runs, collected)
+    fresh_collected = out / "results_hhh_fresh.csv" if args.only_hhh else collected
+    rows = collect_results([job for job in jobs if not job.reference and job.key not in failures], runs, fresh_collected)
+    if args.only_hhh:
+        from historical_results import ROOT as HISTORICAL_ROOT, merge_with_hhh
+        if rows != len(jobs):
+            raise SystemExit(f"expected {len(jobs)} fresh HHH rows but collected {rows}; "
+                             "existing combined results were not replaced")
+        merge_with_hhh(fresh_collected, collected, historical)
+        rows += len(historical)
+        if args.experiment == "fig_5_4_static_baselines":
+            with tarfile.open(HISTORICAL_ROOT / "reference_details.tar.gz", "r:gz") as archive:
+                for member in archive.getmembers():
+                    if not member.isfile():
+                        continue
+                    source = archive.extractfile(member)
+                    if source is None:
+                        raise SystemExit(f"cannot read historical inset trace {member.name}")
+                    with source, (details / Path(member.name).name).open("wb") as target:
+                        shutil.copyfileobj(source, target)
+        if args.experiment == "fig_5_5_dynamic_baselines":
+            for source, name in (("csm_results_baseline.csv", "results_csm.csv"),
+                                 ("csm_results_baseline_rapid.csv", "results_rapidflow.csv"),
+                                 ("csm_results_baseline_dna.csv", "results_dna.csv")):
+                shutil.copy2(HISTORICAL_ROOT / source, out / name)
     print(f"Collected {rows} rows from ssf_*.txt -> {collected}", flush=True)
     if any(job.reference for job in jobs):
         csm_results = out / "results_csm.csv"
@@ -756,10 +813,14 @@ def main() -> int:
                         "--output", str(args.plots_dir)]
         if args.toy:
             plot_command.append("--toy")
-        result = subprocess.run(plot_command)
-        status["plot_status"] = "failed" if result.returncode else "ok"
-        if result.returncode:
-            print(f"Plot construction failed (exit {result.returncode}); collected results retained in {out}",
+        if args.no_references:
+            plot_command.append("--no-references")
+        if args.only_hhh:
+            plot_command.append("--only-hhh")
+        plot_result = subprocess.run(plot_command)
+        status["plot_status"] = "failed" if plot_result.returncode else "ok"
+        if plot_result.returncode:
+            print(f"Plot construction failed (exit {plot_result.returncode}); collected results retained in {out}",
                   file=sys.stderr, flush=True)
         status_file.write_text(json.dumps(status, indent=2) + "\n")
         args.plots_dir.mkdir(parents=True, exist_ok=True)

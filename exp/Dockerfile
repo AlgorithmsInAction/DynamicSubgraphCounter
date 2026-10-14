@@ -26,7 +26,9 @@ WORKDIR /workspace
 # Pin the independently maintained Figure 5.5 reference implementations.
 ARG RAPIDFLOW_REF=2ea4f4c35bcee95940a5e6c17a74a2a111afc2c1
 ARG CSM_REF=6118049cca9b10046aed5ddd045e207c71dc53a9
-RUN git clone https://github.com/shixuansun/RapidFlow.git && \
+ARG REFERENCE_CODE=ON
+RUN if [ "$REFERENCE_CODE" = OFF ]; then exit 0; fi; \
+    git clone https://github.com/shixuansun/RapidFlow.git && \
     git -C RapidFlow checkout "$RAPIDFLOW_REF" && \
     cmake -S RapidFlow -B RapidFlow/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build RapidFlow/build -j"$(nproc)" && \
@@ -38,7 +40,8 @@ ARG DNA_REF=170e4e0551e1ea238cb65bd7a2723f0f7a8a61cd
 # JDK 17 derives javac's default source encoding from the locale. DNA contains
 # UTF-8 source literals; Ubuntu's C.UTF-8 locale needs no extra locale package.
 ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
-RUN git clone https://github.com/AlgorithmsInAction/subgraphcounting_DNA.git && \
+RUN if [ "$REFERENCE_CODE" = OFF ]; then exit 0; fi; \
+    git clone https://github.com/AlgorithmsInAction/subgraphcounting_DNA.git && \
     git -C subgraphcounting_DNA checkout "$DNA_REF" && \
     bash subgraphcounting_DNA/build/build-subgraph-counter.sh
 
@@ -46,7 +49,7 @@ COPY . /workspace/subgraph-counting
 WORKDIR /workspace/subgraph-counting
 # easyCompile unpacks and builds the bundled deps/algora-source.zip; use the
 # same supplied Algora sources as native builds, not moving upstream branches.
-RUN ./easyCompile -g && \
+RUN if [ "$REFERENCE_CODE" = OFF ]; then ./easyCompile -g --without-reference-code; else ./easyCompile -g; fi && \
     g++ -O3 -std=c++17 exp/tools/graph_cleaner.cpp -o /usr/local/bin/graph_cleaner && \
     g++ -O3 -std=c++17 exp/tools/unixTo24hLifetime.cpp -o /usr/local/bin/temporal_to_updates
 

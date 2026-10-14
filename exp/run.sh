@@ -23,7 +23,11 @@ done
 # are checked only when the selected experiment actually runs a reference tool.
 python3 "$ROOT/exp/run.py" "$@" --check-resources
 
-docker build -f "$ROOT/exp/Dockerfile" -t "$IMAGE" "$ROOT"
+reference_code=ON
+for argument in "$@"; do
+    [[ $argument == --no-references || $argument == --only-hhh ]] && reference_code=OFF
+done
+docker build -f "$ROOT/exp/Dockerfile" --build-arg "REFERENCE_CODE=$reference_code" -t "$IMAGE" "$ROOT"
 
 docker_args=(--rm --init --user "$(id -u):$(id -g)" --cap-add SYS_NICE
     --volume "$ROOT/exp/data:/workspace/subgraph-counting/exp/data"

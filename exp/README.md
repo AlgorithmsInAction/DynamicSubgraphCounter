@@ -73,6 +73,21 @@ Alternatively, run the suites separately in the recommended order:
 ./exp/run.sh --engineering_set_appendix
 ```
 
+The `experimental` branch also supports two mutually exclusive partial-run
+modes:
+
+* `--no-references` runs HHH and EGST, using the bundled historical reference
+  results for comparison plots.
+* `--only-hhh` runs every HHH/`v_hhh` job and combines those new measurements
+  with bundled historical EGST and reference results. It resumes completed HHH
+  jobs after interruption; use `--force` to rerun them again. This mode
+  requires full-size data and cannot be combined with `--toy`.
+
+For example, run `./exp/run.sh --all --only-hhh` or
+`./exp/run.sh --all --no-references`. Historical inputs are kept in
+`exp/resources/historical/`; the disposable `experiments/` directory is
+not required.
+
 Each command downloads and prepares only missing data, resumes completed jobs,
 checks CPU/NUMA memory capacity, runs experiments sequentially, and places final
 plots in `exp/plots/`. Before committing to a long run, inspect the detected

@@ -63,7 +63,8 @@ def write_partition_inputs(frame: pd.DataFrame, stage: Path) -> None:
         frame.loc[mask].to_csv(path, index=False)
 
 
-def plot(experiment: str, results: Path, output: Path, toy: bool = False) -> None:
+def plot(experiment: str, results: Path, output: Path, toy: bool = False,
+         no_references: bool = False, only_hhh: bool = False) -> None:
     frame = pd.read_csv(results)
     if frame.empty:
         raise SystemExit(f"No collected result rows in {results}")
@@ -117,34 +118,57 @@ def plot(experiment: str, results: Path, output: Path, toy: bool = False) -> Non
             static.loc[static["algo"].eq("egst") & gradual.round(4).eq(2), "partition"] = "hindex2.0"
             optimized_egst = static["algo"].eq("egst") & direct.eq(1) & high.eq(1)
             static.loc[optimized_egst, ["algo", "partition"]] = "egst_high_direct", "hindex1.0625"
+            if no_references:
+                old = pd.read_csv(EXP_ROOT / "resources/historical/results_150k.csv")
+                old = old.loc[old["algo"].isin(("oba", "escape"))]
+                static = pd.concat((static, old), ignore_index=True)
             static.to_csv(work / "results_150k.csv", index=False)
             details = results.parent / "details"
             shutil.copytree(details, work / "resultsFR") if details.is_dir() else (work / "resultsFR").mkdir()
+            if no_references:
+                (work / "historical_references_without_inset_traces").touch()
             run_original(PLOTTING / "compare/plot_150k_combined.py", work)
             publish(work / "plots/static_compare.pdf", output, f"{experiment}.pdf")
 
         elif experiment == "fig_5_5_dynamic_baselines":
             work = stage / "csm"; work.mkdir()
             ours = frame.copy()
-            csm = pd.read_csv(results.with_name("results_csm.csv"))
-            rapid = pd.read_csv(results.with_name("results_rapidflow.csv"))
+            if no_references:
+                reference_path = EXP_ROOT / "resources/historical"
+                required = [reference_path / name for name in
+                            ("results_baseline.csv", "results_baseline_rapid.csv", "results_baseline_dna.csv")]
+            else:
+                reference_path = results.parent
+                required = [reference_path / name for name in
+                            ("results_csm.csv", "results_rapidflow.csv", "results_dna.csv")]
+            missing = [str(path) for path in required if not path.is_file()]
+            if missing:
+                raise SystemExit("missing historical reference results: " + ", ".join(missing))
+            csm = pd.read_csv(required[0])
+            rapid = pd.read_csv(required[1])
             structure = ours.filter(regex=r"^structure_.*$")
             subgraph = ours.filter(regex=r"^subgraph_.*$")
-            ours["aux_time"] = structure.apply(pd.to_numeric, errors="coerce").sum(axis=1)
-            ours["count_time"] = subgraph.apply(pd.to_numeric, errors="coerce").sum(axis=1)
+            derived_aux = structure.apply(pd.to_numeric, errors="coerce").sum(axis=1, min_count=1)
+            derived_count = subgraph.apply(pd.to_numeric, errors="coerce").sum(axis=1, min_count=1)
+            blank = pd.Series(index=ours.index, dtype=float)
+            ours["aux_time"] = derived_aux.combine_first(pd.to_numeric(ours.get("aux_time", blank), errors="coerce"))
+            ours["count_time"] = derived_count.combine_first(pd.to_numeric(ours.get("count_time", blank), errors="coerce"))
             mode = numeric_column(ours, "recompute_mode", 0).fillna(0)
             epsilon = numeric_column(ours, "epsilon", -1)
             gradual = numeric_column(ours, "gradual_factor", -1)
             late = ours["partition"].eq("epstab") & mode.eq(3)
-            ours.loc[late, "partition"] = "epstab_late_" + epsilon[late].map(lambda value: f"{value:g}")
+            ours.loc[late, "partition"] = epsilon[late].map(
+                lambda value: f"epstab_late_{value:g}" if pd.notna(value) else "epstab")
             indexed = ours["partition"].eq("hindex")
-            ours.loc[indexed, "partition"] = "hindex" + gradual[indexed].map(lambda value: f"{value:g}")
+            ours.loc[indexed, "partition"] = gradual[indexed].map(
+                lambda value: f"hindex{value:g}" if pd.notna(value) else "hindex")
             ours.loc[ours["algo"].eq("egst"), "algo"] = "egst_high_direct"
-            csm["time"] = pd.to_numeric(csm.get("time"), errors="coerce") * 1000
+            if not no_references and not only_hhh:
+                csm["time"] = pd.to_numeric(csm.get("time"), errors="coerce") * 1000
             ours.to_csv(work / "results_ours.csv", index=False)
             csm.to_csv(work / "results_baseline.csv", index=False)
             rapid.to_csv(work / "results_baseline_rapid.csv", index=False)
-            dna = pd.read_csv(results.with_name("results_dna.csv"))
+            dna = pd.read_csv(required[2])
             if toy:
                 dna["graph"] = dna["graph"].str.replace(r"_2k(?=\.e$|$)", "_2m", regex=True)
             dna.to_csv(work / "results_baseline_dna.csv", index=False)
@@ -189,8 +213,11 @@ def main() -> None:
     parser.add_argument("--results", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--toy", action="store_true")
+    parser.add_argument("--no-references", action="store_true")
+    parser.add_argument("--only-hhh", action="store_true")
     args = parser.parse_args()
-    plot(args.experiment, args.results, args.output, args.toy)
+    plot(args.experiment, args.results, args.output, args.toy,
+         args.no_references, args.only_hhh)
 
 
 if __name__ == "__main__":
