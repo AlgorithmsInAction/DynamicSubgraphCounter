@@ -220,7 +220,7 @@ revisions are recorded as Docker build arguments in `exp/Dockerfile`:
   all six single patterns; IEDyn and TurboFlux run on the length-3 path, matching
   the supplied paper-result grid.
 * [RapidFlow](https://github.com/shixuansun/RapidFlow) runs on all six patterns.
-* [DNA](https://github.com/AlgorithmsInAction/subgraphcounting_DNA) runs
+* DNA ([upstream project](https://github.com/BenjaminSchiller/DNA); [experiment-specific fork](https://github.com/AlgorithmsInAction/subgraphcounting_DNA)) runs
   triangle-only and all-pattern maintenance on the same signed-update streams.
   It is compiled once with JDK 17. The harness directly invokes its Java runner
   in `aggregate-only` timing mode, with a five-hour timeout, one active CPU,
