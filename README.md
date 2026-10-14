@@ -65,7 +65,7 @@ build. They are compiled into SubgraphCounter and are not needed at runtime.
 
 Build outputs are in `build/Debug` and `build/Release`. If qmake is not on your
 `PATH`, pass `--qmake /path/to/qmake`. Use `./easyCompile --clean` to rebuild the
-application. A failed OB or ESCAPE download requires network access; use
+application. The full artifact with adapters for OB or ESCAPE requires network access; use
 `--without-reference-code` if those baselines are not needed.
 
 ## Running
