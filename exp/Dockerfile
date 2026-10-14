@@ -16,9 +16,9 @@ RUN set -eux; \
         sleep $((attempt * 5)); \
     done; \
     apt-get -o Acquire::Retries=5 install -y --no-install-recommends \
-        build-essential ca-certificates cmake git libboost-all-dev numactl \
+        build-essential bzip2 ca-certificates cmake git libboost-all-dev numactl \
         python3 python3-matplotlib python3-numpy python3-pandas python3-yaml \
-        qt5-qmake openjdk-17-jdk-headless unzip wget xz-utils; \
+        qt5-qmake openjdk-17-jdk-headless tar unzip wget xz-utils; \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace

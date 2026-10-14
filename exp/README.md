@@ -242,10 +242,11 @@ rerun. Use `--force` to repeat all jobs, including recorded reference failures.
 The self-contained downloader in `exp/scripts/get_data.sh` and preparation
 helpers in `exp/tools/` implement the paper's data recipes:
 
-* **DyReach** (`dyreach.taa.univie.ac.at`) supplies the constant-size and
-  growing Kronecker streams and the dynamic KONECT Wikipedia streams.
-* **SNAP** supplies its timestamped interaction streams.
-* **Network Repository** supplies the remaining timestamped streams.
+* **[DyReach](https://dyreach.taa.univie.ac.at)** supplies the constant-size and
+  growing Kronecker streams.
+* **[KONECT](http://konect.cc/)** supplies the dynamic Wikipedia streams.
+* **[SNAP](https://snap.stanford.edu/data/)** supplies its timestamped interaction streams.
+* **[Network Repository](https://networkrepository.com/)** supplies the remaining timestamped streams.
 
 Only missing downloads or generated files are processed.  Downloads first go
 to `data/raw/*.part` and are atomically renamed when complete.  Preparation:

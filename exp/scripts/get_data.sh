@@ -67,7 +67,7 @@ have_all() {
 
 if ((DRY_RUN)); then
     echo "Data directory: $DATA_DIR"
-    echo "Sources: dyreach.taa.univie.ac.at (Kron/Wiki), SNAP, Network Repository"
+    echo "Sources: dyreach.taa.univie.ac.at (Kron), konect.cc (Wiki), SNAP, Network Repository"
     echo "Would prepare: $([[ $TOY == 1 ]] && echo 'toy ES (24 graphs, 2,000 updates each)' || { [[ $want_full == 1 ]] && echo 'FS (56 graphs)' || true; [[ $want_full == 1 && $want_engineering == 1 ]] && echo ' + ' || true; [[ $want_engineering == 1 ]] && echo 'ES (24 graphs)' || true; })"
     exit 0
 fi
@@ -119,14 +119,33 @@ prepare_kron() {
 }
 
 prepare_wiki() {
-    local country archive unpacked output
+    local country dataset archive member unpacked output
     country=$1
-    archive="$RAW/${country}_wiki.xz"
+    dataset="link-dynamic-${country}wiki"
+    archive="$RAW/download.tsv.${dataset}.tar.bz2"
+    unpacked="$RAW/${country}_wiki"
     output="$FULL/${country}_wiki.e"
     [[ -s $output ]] && return 0
-    download "https://dyreach.taa.univie.ac.at/assets/data/konect/link-dynamic-${country}wiki.xz" "$archive"
-    unpacked=${archive%.xz}
-    if [[ ! -s $unpacked ]]; then xz --decompress --stdout "$archive" > "$unpacked.part"; mv "$unpacked.part" "$unpacked"; fi
+    download "http://konect.cc/files/download.tsv.${dataset}.tar.bz2" "$archive"
+    if [[ ! -s $unpacked ]]; then
+        member=$(tar -tjf "$archive" | awk -v leaf="out.${dataset}" '
+            ($0 == leaf || substr($0, length($0) - length(leaf)) == "/" leaf) && !found {
+                found = $0
+            }
+            END { print found }')
+        [[ -n $member ]] || { echo "No out.${dataset} in $archive" >&2; return 1; }
+        tar -xOf "$archive" "$member" | awk '
+            NF == 0 || $1 ~ /^%/ { next }
+            NF != 4 || $1 !~ /^[0-9]+$/ || $2 !~ /^[0-9]+$/ ||
+                ($3 != "+1" && $3 != "-1") || $4 !~ /^[0-9]+$/ {
+                print "Invalid KONECT dynamic edge at line " NR > "/dev/stderr"
+                exit 1
+            }
+            { print $1, $2, $3, $4; rows++ }
+            END { if (rows == 0) exit 1 }
+        ' > "$unpacked.part"
+        mv "$unpacked.part" "$unpacked"
+    fi
     clean_dynamic "$unpacked" "$output"
 }
 
