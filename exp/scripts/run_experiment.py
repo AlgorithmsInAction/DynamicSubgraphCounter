@@ -485,6 +485,7 @@ def main() -> int:
     p.add_argument("--results-dir", type=Path, required=True)
     p.add_argument("--plots-dir", type=Path, required=True)
     p.add_argument("--force", action="store_true")
+    p.add_argument("--pattern", choices=("triangle", "tPath", "paw", "fCycle", "diamond", "fClique"))
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--skip-plots", action="store_true")
     p.add_argument("--toy", action="store_true")
@@ -495,6 +496,8 @@ def main() -> int:
         p.error("--only-hhh and --no-references are mutually exclusive")
     if args.only_hhh and args.toy:
         p.error("--only-hhh requires the full-size historical result grids")
+    if args.pattern and args.experiment not in ("fig_a_4_hhh_single_patterns", "fig_a_5_egst_single_patterns"):
+        raise SystemExit("--pattern is supported only for Figure A.4/A.5")
     if args.toy and args.experiment not in TOY_EXPERIMENTS:
         raise SystemExit("--toy is supported only by engineering-set main experiments")
     cpus = parse_cpu_set(args.cpus)
@@ -505,12 +508,17 @@ def main() -> int:
     all_jobs = jobs_for(args.experiment)
     jobs = jobs_for(args.experiment, no_references=args.no_references,
                     only_hhh=args.only_hhh)
+    if args.pattern:
+        all_jobs = [job for job in all_jobs if job.pattern == args.pattern]
+        jobs = [job for job in jobs if job.pattern == args.pattern]
     historical = []
     if args.only_hhh:
         from historical_results import historical_rows
         historical = historical_rows(args.experiment, [job for job in all_jobs if job not in jobs])
     print(f"[stage 2/4] Run {args.experiment}: {len(jobs)} runs", flush=True)
     out = args.results_dir / args.experiment
+    if args.pattern:
+        out = out / f"only_{args.pattern}"
     runs = out / "runs"
     logs = out / "logs"
     details = out / "details"
@@ -817,6 +825,8 @@ def main() -> int:
             plot_command.append("--no-references")
         if args.only_hhh:
             plot_command.append("--only-hhh")
+        if args.pattern:
+            plot_command.extend(("--pattern", args.pattern))
         plot_result = subprocess.run(plot_command)
         status["plot_status"] = "failed" if plot_result.returncode else "ok"
         if plot_result.returncode:

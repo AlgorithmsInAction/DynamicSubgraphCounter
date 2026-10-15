@@ -64,8 +64,13 @@ def write_partition_inputs(frame: pd.DataFrame, stage: Path) -> None:
 
 
 def plot(experiment: str, results: Path, output: Path, toy: bool = False,
-         no_references: bool = False, only_hhh: bool = False) -> None:
+         no_references: bool = False, only_hhh: bool = False,
+         pattern: str | None = None) -> None:
     frame = pd.read_csv(results)
+    if pattern:
+        paper_pattern = {"triangle": "tCycles", "tPath": "tPaths", "paw": "paws",
+                         "fCycle": "fCycles", "diamond": "diamonds", "fClique": "fCliques"}[pattern]
+        frame = frame[frame["pattern"].eq(paper_pattern)]
     if frame.empty:
         raise SystemExit(f"No collected result rows in {results}")
     if toy:
@@ -100,8 +105,9 @@ def plot(experiment: str, results: Path, output: Path, toy: bool = False,
                 publish(work / "plots/PARTS_egst_all.pdf", output, f"{experiment}.pdf")
             else:
                 selected_algo = "hhh" if experiment == "fig_a_4_hhh_single_patterns" else "egst"
-                for pattern in PAPER_PATTERNS:
-                    publish(work / f"plots/PARTS_{selected_algo}_{pattern}.pdf", output, f"{experiment}_{pattern}.pdf")
+                for paper_pattern in ((paper_pattern,) if pattern else PAPER_PATTERNS):
+                    publish(work / f"plots/PARTS_{selected_algo}_{paper_pattern}.pdf", output,
+                            f"{experiment}_{paper_pattern}.pdf")
 
         elif experiment == "fig_5_4_static_baselines":
             work = stage / "compare"; work.mkdir()
@@ -215,9 +221,10 @@ def main() -> None:
     parser.add_argument("--toy", action="store_true")
     parser.add_argument("--no-references", action="store_true")
     parser.add_argument("--only-hhh", action="store_true")
+    parser.add_argument("--pattern", choices=("triangle", "tPath", "paw", "fCycle", "diamond", "fClique"))
     args = parser.parse_args()
     plot(args.experiment, args.results, args.output, args.toy,
-         args.no_references, args.only_hhh)
+         args.no_references, args.only_hhh, args.pattern)
 
 
 if __name__ == "__main__":

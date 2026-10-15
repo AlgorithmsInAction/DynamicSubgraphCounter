@@ -112,6 +112,8 @@ def parser() -> argparse.ArgumentParser:
     modes.add_argument("--only-hhh", action="store_true",
                        help="rerun all HHH/v_hhh jobs; use historical EGST and reference results")
     p.add_argument("--force", action="store_true", help="rerun completed jobs")
+    p.add_argument("--pattern", choices=("triangle", "tPath", "paw", "fCycle", "diamond", "fClique"),
+                   help="run only this pattern in a Figure A.4/A.5 experiment")
     p.add_argument("--dry-run", action="store_true", help="validate and print work without executing jobs")
     p.add_argument("--list", action="store_true", help="list suites, experiments, and detected CPUs")
     p.add_argument("--estimate", action="store_true", help="print estimated runtimes and stop")
@@ -276,6 +278,9 @@ def main() -> int:
     args = parser().parse_args()
     cpus = validate_cpus(args.cpus or detect_cpus())
     suites, experiments = selected(args)
+    if args.pattern and (len(experiments) != 1 or experiments[0] not in
+                         ("fig_a_4_hhh_single_patterns", "fig_a_5_egst_single_patterns")):
+        raise SystemExit("--pattern requires a Figure A.4 or A.5 --experiment")
     if args.toy and suites != ["engineering_set_main"]:
         raise SystemExit(
             "--toy is available with --engineering_set_main or with a main-suite --experiment"
@@ -347,6 +352,8 @@ def main() -> int:
                    "--results-dir", str(args.results_dir), "--plots-dir", str(args.plots_dir)]
         if args.force:
             command.append("--force")
+        if args.pattern:
+            command.extend(("--pattern", args.pattern))
         if args.dry_run:
             command.append("--dry-run")
         if args.skip_plots:
