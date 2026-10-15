@@ -41,9 +41,9 @@ COUNTER_TYPE HSubgraphCounts::getNrTPathsWithEdge(ILV *head, ILV *tail) {
     bool tailHigh{is_high(tail)};
     COUNTER_TYPE ret{0};
     // 1. Edge is in center of path
-    ret += (head->getUndirectedDegree() - 1) *
-               (tail->getUndirectedDegree() - 1) -
-           getNrTriangleWithEdge(head, tail);
+    ret +=
+        (head->getUndirectedDegree() - 1) * (tail->getUndirectedDegree() - 1) -
+        getNrTriangleWithEdge(head, tail);
 
     // 2. Path starts with edge + next vertex in path has low degree
     COUNTER_TYPE pathsStartingWithEdge = 0;
@@ -52,8 +52,8 @@ COUNTER_TYPE HSubgraphCounts::getNrTPathsWithEdge(ILV *head, ILV *tail) {
         bool other_is_high{is_high(other)};
 
         if (other_is_high) {
-            pathsStartingWithEdge = StrucCount.getNrvLV(other) -
-                                    (low->getUndirectedDegree() - 1);
+            pathsStartingWithEdge =
+                StrucCount.getNrvLV(other) - (low->getUndirectedDegree() - 1);
         }
         StrucCount.forEachLowNeighbor(low, {other}, nullptr, [&](auto x) {
 #if ENABLE_DEEPER_STATS
@@ -536,89 +536,93 @@ COUNTER_TYPE HSubgraphCounts::getNrDiamondsWithEdge(ILV *head, ILV *tail) {
  * @return int
  */
 COUNTER_TYPE HSubgraphCounts::getNrFCliquesWithEdge(ILV *head, ILV *tail) {
-    bool head_high = is_high(head);
-    bool tail_high = is_high(tail);
     COUNTER_TYPE ret{0};
-    int d1 = StrucCount.vPart->getLowDegree(head);
-    int d2 = StrucCount.vPart->getLowDegree(tail);
-    auto m = graph->getNumArcs(1);
+    const bool use_cL = use_all_aux && is_high(head) && is_high(tail);
 
-    if (d1 * d1 > m && d2 * d2 > m) {
-        // Need to run over all edges for O(m) runtime
-        graph->mapEdges([&](auto edge) {
-            auto x = edge->getHead();
-            auto y = edge->getTail();
-            if (x == head || x == tail || y == head || y == tail) {
+    // A four-clique containing head-tail is an edge between two common
+    // neighbors. Pair checks cannot exceed the old nested scan; scanning
+    // incident edges caps the work at O(m) when the common set is dense.
+    enum class NeighborPartition { All, Low, High };
+    auto count_pairs = [&](const std::vector<ILV *> &vertices,
+                           size_t incident_edges, NeighborPartition partition) {
+        if (vertices.size() < 2)
+            return;
+
+        const size_t pairs = vertices.size() * (vertices.size() - 1) / 2;
+        if (pairs <= incident_edges) {
+            for (size_t i = 0; i < vertices.size(); ++i)
+                for (size_t j = i + 1; j < vertices.size(); ++j)
+                    ret += edge_exist(vertices[i], vertices[j]);
+            return;
+        }
+
+        for (auto *x : vertices) {
+            auto count_neighbor = [&](auto y) {
+#if ENABLE_DEEPER_STATS
+                ++iterate_neighbor;
+#endif
+                if (x->getId() < y->getId() && edge_exist(y, head) &&
+                    edge_exist(y, tail))
+                    ++ret;
+            };
+            if (partition == NeighborPartition::Low)
+                forEachLowNeighbor(x, {head, tail}, nullptr, count_neighbor);
+            else if (partition == NeighborPartition::High)
+                forEachHighNeighbor(x, {head, tail}, nullptr, count_neighbor);
+            else
+                forEachNeighbor(x, {head, tail}, count_neighbor);
+        }
+    };
+
+    StrucCount.forLowerDegree(head, tail, [&](auto smaller, auto other) {
+        std::vector<ILV *> common;
+        ILV *first_common = nullptr;
+        size_t incident_edges = 0;
+
+        forEachNeighbor(smaller, {other}, [&](auto x) {
+#if ENABLE_DEEPER_STATS
+            ++iterate_neighbor;
+#endif
+            if (!edge_exist(x, other))
                 return;
+            incident_edges += x->getUndirectedDegree();
+            if (!first_common) {
+                first_common = x;
+            } else {
+                if (common.empty()) {
+                    common.reserve(4);
+                    common.push_back(first_common);
+                }
+                common.push_back(x);
             }
+        });
+        if (common.size() < 2)
+            return;
 
-            if (edge_exist(x, head) && edge_exist(x, tail) &&
-                edge_exist(y, head) && edge_exist(y, tail)) {
-                ++ret;
+        if (!use_cL) {
+            count_pairs(common, incident_edges, NeighborPartition::All);
+            return;
+        }
+
+        // cL(head, tail, h) counts low common neighbors adjacent to a high
+        // common neighbor h. Use it for every mixed low-high pair exactly once.
+        std::vector<ILV *> low, high;
+        size_t low_incident = 0, high_incident = 0;
+        for (auto *x : common) {
+            if (is_high(x)) {
+                high.push_back(x);
+                high_incident += StrucCount.vPart->getHighDegree(x);
+            } else {
+                low.push_back(x);
+                low_incident += StrucCount.vPart->getLowDegree(x);
             }
-        });
-
-        return ret;
-    }
-
-    if (use_all_aux && head_high && tail_high) {
-
-        // 1. The other two vertices are low
-        StrucCount.forLowerLowDegree(head, tail, [&](auto ldv, auto hdv) {
-            forEachLowNeighbor(ldv, {hdv}, nullptr, [&](auto x) {
-#if ENABLE_DEEPER_STATS
-                ++iterate_neighbor;
-#endif
-                if (!edge_exist(x, hdv))
-                    return;
-                forEachLowNeighbor(ldv, {hdv}, x, [&](auto y) {
-#if ENABLE_DEEPER_STATS
-                    ++iterate_neighbor;
-#endif
-                    if (edge_exist(y, hdv) && edge_exist(y, x))
-                        ret++;
-                });
-            });
-        });
-
-        StrucCount.forLowerHighDegree(head, tail, [&](auto ldv, auto hdv) {
-            forEachHighNeighbor(ldv, {hdv}, nullptr, [&](auto h) {
-#if ENABLE_DEEPER_STATS
-                ++iterate_h;
-#endif
-                if (!edge_exist(h, hdv))
-                    return;
-                // 2. One other is high and one is low
-                ret += StrucCount.getNrcL(ldv, hdv, h);
-
-                // 3. All are high
-                forEachHighNeighbor(ldv, {hdv}, h, [&](auto h2) {
-#if ENABLE_DEEPER_STATS
-                    ++iterate_h;
-#endif
-                    if (edge_exist(h, h2) && edge_exist(h2, hdv))
-                        ret++;
-                });
-            });
-        });
-    } else {
-        StrucCount.forLowerDegree(head, tail, [&](auto low, auto any) {
-            forEachNeighbor(low, {any}, [&](auto x) {
-#if ENABLE_DEEPER_STATS
-                ++iterate_neighbor;
-#endif
-                if (!edge_exist(x, any))
-                    return;
-                forEachNeighbor(low, {any}, x, [&](auto y) {
-#if ENABLE_DEEPER_STATS
-                    ++iterate_neighbor;
-#endif
-                    if (edge_exist(y, any) && edge_exist(y, x))
-                        ret++;
-                });
-            });
-        });
-    }
+        }
+        if (!low.empty())
+            for (auto *x : high)
+                ret += StrucCount.getNrcL(head, tail, x);
+        count_pairs(low, low_incident, NeighborPartition::Low);
+        count_pairs(high, high_incident, NeighborPartition::High);
+    });
 
     return ret;
 }

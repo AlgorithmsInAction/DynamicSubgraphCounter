@@ -415,46 +415,66 @@ COUNTER_TYPE HVSubgraphCounts::getNrDiamondsWithEdge(ILV *head, ILV *tail) {
  * @return int
  */
 COUNTER_TYPE HVSubgraphCounts::getNrFCliquesWithEdge(ILV *head, ILV *tail) {
-    bool head_high = is_high(head);
-    bool tail_high = is_high(tail);
     COUNTER_TYPE ret{0};
-    int d1 = StrucCount.vPart->getLowDegree(head);
-    int d2 = StrucCount.vPart->getLowDegree(tail);
-    auto m = graph->getNumArcs(1);
 
-    if (d1 * d1 > m && d2 * d2 > m) {
-        // Need to run over all edges for O(m) runtime
-        graph->mapEdges([&](auto edge) {
-            auto x = edge->getHead();
-            auto y = edge->getTail();
-            if (x == head || x == tail || y == head || y == tail) {
-                return;
-            }
+    // A four-clique containing head-tail is an edge between two common
+    // neighbors. Pair checks cannot exceed the old nested scan; scanning
+    // incident edges caps the work at O(m) when the common set is dense.
+    enum class NeighborPartition { All, Low, High };
+    auto count_pairs = [&](const std::vector<ILV *> &vertices,
+                           size_t incident_edges) {
+        if (vertices.size() < 2)
+            return;
 
-            if (edge_exist(x, head) && edge_exist(x, tail) &&
-                edge_exist(y, head) && edge_exist(y, tail)) {
-                ++ret;
-            }
-        });
+        const size_t pairs = vertices.size() * (vertices.size() - 1) / 2;
+        if (pairs <= incident_edges) {
+            for (size_t i = 0; i < vertices.size(); ++i)
+                for (size_t j = i + 1; j < vertices.size(); ++j)
+                    ret += edge_exist(vertices[i], vertices[j]);
+            return;
+        }
 
-        return ret;
-    }
-
-    StrucCount.forLowerDegree(head, tail, [&](auto low, auto any) {
-        forEachNeighbor(low, {any}, [&](auto x) {
-#if ENABLE_DEEPER_STATS
-            ++iterate_neighbor;
-#endif
-            if (!edge_exist(x, any))
-                return;
-            forEachNeighbor(low, {any}, x, [&](auto y) {
+        for (auto *x : vertices) {
+            auto count_neighbor = [&](auto y) {
 #if ENABLE_DEEPER_STATS
                 ++iterate_neighbor;
 #endif
-                if (edge_exist(y, any) && edge_exist(y, x))
-                    ret++;
-            });
+                if (x->getId() < y->getId() && edge_exist(y, head) &&
+                    edge_exist(y, tail))
+                    ++ret;
+            };
+
+            forEachNeighbor(x, {head, tail}, count_neighbor);
+        }
+    };
+
+    StrucCount.forLowerDegree(head, tail, [&](auto smaller, auto other) {
+        std::vector<ILV *> common;
+        ILV *first_common = nullptr;
+        size_t incident_edges = 0;
+
+        forEachNeighbor(smaller, {other}, [&](auto x) {
+#if ENABLE_DEEPER_STATS
+            ++iterate_neighbor;
+#endif
+            if (!edge_exist(x, other))
+                return;
+            incident_edges += x->getUndirectedDegree();
+            if (!first_common) {
+                first_common = x;
+            } else {
+                if (common.empty()) {
+                    common.reserve(4);
+                    common.push_back(first_common);
+                }
+                common.push_back(x);
+            }
         });
+        if (common.size() < 2)
+            return;
+
+        count_pairs(common, incident_edges);
+        return;
     });
 
     return ret;
